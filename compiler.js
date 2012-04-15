@@ -26,37 +26,69 @@ var reverse = function(expr) {
 
 var endTime = function (time, expr) {
     var totalDuration = function(expr){
+        // The duration of a note node is the duration itself
         if(expr.tag=='note')
             return expr.dur;
+        
+        // The duration of a par node is the maximum of 
+        // its children
+        if(expr.tag == 'par'){
+            var leftside = totalDuration(expr.left);
+            var rightside = totalDuration(expr.right);
+        
+            return leftside > rightside ? leftside : rightside;
+        }
+        
+        // The duration of a seq node is the sum of the durations
         return totalDuration(expr.left) + totalDuration(expr.right);
     };
-    
+
     return time + totalDuration(expr);
 };
 
 
-var compileH = function(expr, obj){
+var compileT = function(expr, time){
+    var ret = [];
+    
     if(expr.tag == 'note'){
-        
-        obj.compiled.push({
-            tag: 'note',
+        ret.push({
+            tag : 'note',
             pitch: expr.pitch,
-            start: obj.time,
+            start: time,
             dur: expr.dur
         });
-        obj.time = obj.time + expr.dur;
-        
-    }else{
-        compileH(expr.left, obj);
-        compileH(expr.right, obj);
-    }    
+    }
+    if(expr.tag == 'par'){
+        // Call on left and right with the same starting time
+        var l = compileT(expr.left, time); 
+        for(var li in l){
+            ret.push(l[li]);
+        }
+        var r = compileT(expr.right, time);
+        for(var ri in r){
+            ret.push(r[ri]);   
+        }
+    }
+    if(expr.tag == 'seq'){
+        var sl = compileT(expr.left, time);
+        for(var sli in sl){
+            ret.push(sl[sli]); 
+        }
+
+        time = endTime(time, expr.left);
+                
+        var sr = compileT(expr.right, time);
+        for(var sri in sr){
+            ret.push(sr[sri]);
+        }
+    }
     
-    return obj.compiled;
+    return ret;
 };
 
 
 var compile = function (musexpr) {
-    return compileH(musexpr, { compiled: [], time: 0});
+    return compileT(musexpr, 0);
 };
 
 
@@ -80,4 +112,6 @@ var melody_mus =
 
 console.log(melody_mus);
 console.log(compile(melody_mus));
+
+
 
