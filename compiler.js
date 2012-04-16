@@ -1,5 +1,4 @@
 
-
 var prelude = function(expr) {
     return {
         tag: 'seq',
@@ -126,7 +125,7 @@ var compileT = function(expr, time){
     if(expr.tag == 'repeat'){
 	for(var i = 0; i < expr.count; i++){
 	    var rl = compileT(expr.section, time);
-	    time = endTime(expr.section);
+	    time = endTime(time, expr.section);
 	    rl.forEach(function(val, idx, arr){ 
 		ret.push(val);
 	    });
