@@ -38,6 +38,9 @@ var endTime = function (time, expr) {
         
             return leftside > rightside ? leftside : rightside;
         }
+	if(expr.tag == 'repeat'){
+		return totalDuration(expr.section) * expr.count;
+	}
         
         // The duration of a seq node is the sum of the durations
         return totalDuration(expr.left) + totalDuration(expr.right);
@@ -119,6 +122,15 @@ var compileT = function(expr, time){
 	   start: time,
 	   dur : expr.dur
 	});
+    }
+    if(expr.tag == 'repeat'){
+	for(var i = 0; i < expr.count; i++){
+	    var rl = compileT(expr.section, time);
+	    time = endTime(expr.section);
+	    rl.forEach(function(val, idx, arr){ 
+		ret.push(val);
+	    });
+	}
     }
     if(expr.tag == 'par'){
         // Call on left and right with the same starting time
