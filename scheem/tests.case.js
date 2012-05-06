@@ -24,7 +24,7 @@
 		"expected" : ["a", "b", "c"]
 	},
 	{
-		"test" : "(\ta\tb\tc)",
+		"test" : "(\ta\tb\tc\t)",
 		"expected" : ["a", "b", "c"]
 	}
 ]

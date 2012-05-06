@@ -4,7 +4,7 @@ start =
 
 // Any valid expression
 expression =
-    atom
+    space_atom
   / list_expressions
 
 // A sequence of valid chars
