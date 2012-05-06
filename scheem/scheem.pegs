@@ -16,8 +16,8 @@ expression =
 
 // A comment
 comment = 
-	";;" content:.* "\n"?
-	{return []/*[content.join('')]*/;}
+	";;" (!newline .)* newline?
+	{return [];}
 
 // A sequence of valid chars
 atom =
@@ -46,3 +46,8 @@ whitespace =
 list_expressions =
 	"(" head:wild_exp tail:wild_exp* ")"
     { return [ head ].concat(tail); }
+
+newline =
+	"\r\n"
+     /  "\r"
+     /  "\n"

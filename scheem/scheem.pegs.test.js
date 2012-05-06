@@ -5,7 +5,7 @@ var assert = require('assert');
 var fs = require('fs');
 
 
-fs.readFile('scheem.pegs.js', 'utf-8', function(err, data){
+fs.readFile('scheem.pegs', 'utf-8', function(err, data){
 	if(err) throw err;
 
 	// Build parser
