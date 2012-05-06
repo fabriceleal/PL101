@@ -14,7 +14,7 @@ fs.readFile('scheem.pegs.js', 'utf-8', function(err, data){
 	// Read use cases
 	fs.readdir('.', function(err, data){		
 		data.forEach(function(item){
-			if(item.match("^.*\\\.case\\\.js$")){
+			if(item.match("^.*\\\.case\\\.json$")){
 				fs.readFile(item, 'utf-8', function(err, data){
 					//console.log(data);
 
