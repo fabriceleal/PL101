@@ -12,9 +12,9 @@ quoted_expression =
 // Any valid expression
 expression =
     wild_atom
-  / list_expressions
+  / wild_lstexp
 
-// A comment
+// A lone comment, that may or not end with a newline
 comment = 
 	";;" (!newline .)* newline?
 	{return [];}
@@ -24,14 +24,22 @@ atom =
 	chars:validchar+
     {return chars.join("");}
 
+// optional comment paired with optional whitespace
+paircommwhite =
+	comment* whitespace*
+
 // A valid atom with any number of trailing spaces (left and right) or comments
 wild_atom =
-	whitespace* comment* whitespace* head:atom whitespace* whitespace* comment* whitespace*
+	whitespace* paircommwhite head:atom whitespace* whitespace* paircommwhite
     {return head;}
 
 // A valid expression with any number of trailing spaces or comments
 wild_exp =
-	whitespace* comment* whitespace* rest:expression whitespace* comment* whitespace*
+	whitespace* paircommwhite rest:expression whitespace* paircommwhite
+    {return rest;}
+
+wild_lstexp =
+        whitespace* paircommwhite rest:list_expressions whitespace* paircommwhite
     {return rest;}
     
 // A valid char for an expression
@@ -40,7 +48,7 @@ validchar =
 
 // A whitespace
 whitespace = 
-	[" "|"\t"|"\n"]
+	[" "|"\t"|"\n"|"\r"|"\r\n"]
 
 // A list of expressions
 list_expressions =

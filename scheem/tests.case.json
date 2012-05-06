@@ -48,11 +48,23 @@
 		"expected" : []
 	},
 	{
+		"test" : ";; This is a comment ending in a newline\n",
+		"expected": []
+	},
+	{
 		"test" : ";; This is a comment with an atom\na",
 		"expected" : "a"
 	},
 	{
 		"test" : ";; This is a comment with an expresion\n(a b c)",
+		"expected" : ["a", "b", "c"]
+	},
+	{
+		"test" : "\n\n\n;; A comment\n\n(a b c)",
+		"expected" : ["a", "b", "c"]
+	},
+	{
+		"test" : "\n\n\n;; A comment\n\n;; Another comment\n\n(a b c)",
 		"expected" : ["a", "b", "c"]
 	}
 ]
