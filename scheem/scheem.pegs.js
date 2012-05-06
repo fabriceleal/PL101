@@ -1,10 +1,16 @@
+// FIXME Assume expressions without trailing spaces
 
 start =
     expression
+  / quoted_expression
+
+quoted_expression =
+        whitespace* "'" stuff:expression whitespace*
+    { return ["quote", stuff]; }
 
 // Any valid expression
 expression =
-    space_atom
+    atom
   / list_expressions
 
 // A sequence of valid chars
@@ -15,7 +21,7 @@ atom =
 // A valid atom with any number of trailing spaces (left and right)
 space_atom =
 	whitespace* head:atom whitespace*
-	{return head;}
+    {return head;}
 
 // A valid expression with any number of spaces at the front
 space_exp =
