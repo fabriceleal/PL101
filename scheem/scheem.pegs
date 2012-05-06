@@ -26,8 +26,8 @@ atom =
 
 // optional comment paired with optional whitespace
 paircommwhite =
-	comment* 
-      / whitespace*
+	comment 
+      / whitespace
 
 // A valid atom with any number of trailing spaces (left and right) or comments
 wild_atom =
