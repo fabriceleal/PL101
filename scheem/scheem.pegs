@@ -26,20 +26,21 @@ atom =
 
 // optional comment paired with optional whitespace
 paircommwhite =
-	comment* whitespace*
+	comment* 
+      / whitespace*
 
 // A valid atom with any number of trailing spaces (left and right) or comments
 wild_atom =
-	whitespace* paircommwhite head:atom whitespace* whitespace* paircommwhite
+	paircommwhite* head:atom paircommwhite*
     {return head;}
 
 // A valid expression with any number of trailing spaces or comments
 wild_exp =
-	whitespace* paircommwhite rest:expression whitespace* paircommwhite
+        paircommwhite* rest:expression paircommwhite*
     {return rest;}
 
 wild_lstexp =
-        whitespace* paircommwhite rest:list_expressions whitespace* paircommwhite
+        paircommwhite* rest:list_expressions paircommwhite*
     {return rest;}
     
 // A valid char for an expression
