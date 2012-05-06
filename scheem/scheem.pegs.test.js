@@ -11,16 +11,20 @@ fs.readFile('scheem.pegs.js', 'utf-8', function(err, data){
 	// Build parser
 	var parse = pegs.buildParser(data).parse;
 
-	// Read use cases
-	fs.readdir('.', function(err, data){		
+	// Get files in dir
+	fs.readdir('.', function(err, data){
 		data.forEach(function(item){
+			// Filter test files (end with .case.json)
 			if(item.match("^.*\\\.case\\\.json$")){
+				// Read and run each file
 				fs.readFile(item, 'utf-8', function(err, data){
 					//console.log(data);
 
+					// Parse file content as json
 					var compiled = JSON.parse(data);
 					var run = 0, succeded = 0;
 					
+					// Run test with each elem
 					compiled.forEach(function(test, idx){
 						try{
 							console.log('Running test ' + idx + ' of ' + item);
