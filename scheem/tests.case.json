@@ -53,6 +53,6 @@
 	},
 	{
 		"test" : ";; This is a comment with an expresion\n(a, b, c)",
-		"expected" : ["a", "b", "c"]
+		"expected" : ["a" "b" "c"]
 	}
 ]
