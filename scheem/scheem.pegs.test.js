@@ -33,7 +33,8 @@ fs.readFile('scheem.pegs', 'utf-8', function(err, data){
 							try{
 								// Deep equal handles passively numbers vs strings
 								if(typeof parsed !== typeof test.expected){
-									throw 'typeof dont match';
+									// I know this will fail, but I want a verbose exception!
+									assert.strictEqual(parsed, test.expected);
 								}else{
 									assert.deepEqual(parsed, test.expected);
 								}
