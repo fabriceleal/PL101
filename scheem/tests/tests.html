@@ -22,12 +22,23 @@
 					suite(item.suite, function(){
 						item.tests.forEach(function(thisTest){
 							
+							var compiled = null;
+
 							// "Compile" the function, or it won't appear in the html :|
-							var compiled = eval('(function(){assert.deepEqual( evalScheem(' + 
-									JSON.stringify(thisTest.test) + ', ' + 
-									JSON.stringify(thisTest.env)+') , ' + 
-									JSON.stringify(thisTest.expected) + ' );})');
-							//---
+							if(thisTest.expected){
+								// Expect cool output
+								compiled = eval('(function(){assert.deepEqual( evalScheem(' + 
+										JSON.stringify(thisTest.test) + ', ' + 
+										JSON.stringify(thisTest.env)+') , ' + 
+										JSON.stringify(thisTest.expected) + ' );})');
+								//---
+							}else{
+								// Expect exception
+								compiled = eval('(function(){ assert.throws(function(){ evalScheem(' + 
+										JSON.stringify(thisTest.test) + ', ' + 
+										JSON.stringify(thisTest.env) + ') }); })');
+								//---
+							}
 
 							test(thisTest.description, compiled);
 

@@ -1,6 +1,51 @@
+
+/*------ Extensions ------ */
+Array.prototype.any = function(predicate){
+	var found = false;
+	var treatedPredicate = function(item){
+		if(found)
+			return false;
+
+		if(predicate(item)){
+			found = true;
+			return true;
+		}
+
+		return false;
+	};
+
+	var tmp = this.filter(treatedPredicate);
+
+	return (tmp && tmp.constructor == Array && tmp.length > 0);
+};
+
+/*-------- Aux functions ------------*/
+
+var parseList = function(lst){
+	return lst.map(function(item){ return evalScheem(item);});
+};
+
+var isNumber = function(arg){
+	return typeof arg !== 'number';
+}
+
+/*-------- The interpreter ---------*/
+
 var functions = {
     '+' : function(args, env){
-        return evalScheem(args[0], env) + evalScheem(args[1], env);
+
+	if(!(args) || args.constructor != Array || args.length == 0){
+		throw '+ called without parameters!';
+	}
+
+	var parsed = evalScheem(args[0], env);
+
+	// If any arg is not a number
+	if(isNumber(parsed)){
+		throw 'There are arguments that are not numbers!';
+	}
+
+        return parsed + (args.length > 1 ? this['+'](args.slice(1), env) : 0);
     },
     '*' : function(args, env){
         return evalScheem(args[0], env) * evalScheem(args[1], env);

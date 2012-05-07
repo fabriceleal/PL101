@@ -26,6 +26,17 @@
 		"suite" : "add",
 		"tests" : [
 			{
+				"description" 	: "without args",
+				"test" 			: ["+"],
+				"env"  			: {}
+			},
+			{
+				"description" 	: "5 numbers",
+				"test" 			: ["+", 1, 2, 3, 4, 5],
+				"env"  			: {},
+				"expected"		: 15
+			},
+			{
 				"description" 	: "two numbers",
 				"test" 			: ["+", 3, 5],
 				"env"  			: {},
@@ -40,8 +51,7 @@
 			{
 				"description"	: "a dog and a cat",
 				"test"			: ["+", "dog", "cat"],
-				"env"				: {},
-				"expected"		: 42
+				"env"				: {}
 			},
 			{
 				"description"	: "two plus two",
