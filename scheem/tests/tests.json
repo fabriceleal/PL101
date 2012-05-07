@@ -26,28 +26,28 @@
 		"suite" : "add",
 		"tests" : [
 			{
-				"description" 	: "...",
-				"test" 			: ["quote", 3],
+				"description" 	: "two numbers",
+				"test" 			: ["+", 3, 5],
 				"env"  			: {},
-				"expected" 		: 3
+				"expected" 		: 8
 			},
 			{
-				"description"	: "...",
-				"test"			: ["quote", "dog"],
+				"description"	: "a number and an expression",
+				"test"			: ["+", 3, ["+", 2, 2]],
 				"env"				: {},
-				"expected"		: "dog"
+				"expected"		: 7
 			},
 			{
-				"description"	: "...",
-				"test"			: ["quote", [1, 2, 3]],
+				"description"	: "a dog and a cat",
+				"test"			: ["+", "dog", "cat"],
 				"env"				: {},
-				"expected"		: [1, 2, 3]
+				"expected"		: 42
 			},
 			{
-				"description"	: "...",
-				"test"			: ["quote", [1, 2, 3]],
+				"description"	: "two plus two",
+				"test"			: ["+", 2, 2],
 				"env"				: {},
-				"expected"		: [1, 2, 3]
+				"expected"		: 4
 			}
 		]
 	}
