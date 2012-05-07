@@ -10,7 +10,7 @@ fs.readFile('scheem.pegs', 'utf-8', function(err, data){
 
 	// Build parser
 	var parse = pegs.buildParser(data).parse;
-
+	
 	// Get files in dir
 	fs.readdir('.', function(err, data){
 		data.forEach(function(item){
