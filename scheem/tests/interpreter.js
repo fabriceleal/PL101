@@ -61,7 +61,7 @@ var functions = {
 	return nbrReduction('*', args, env, function(x, y){return x * y;});
     },
     '/' : function(args, env){
-        return nbrReduction('/', args, env, function(x, y){ return x / y;});
+        return nbrReduction('/', args, env, function(x, y){ if(y == 0) throw 'Cannot divide by zero in Scheem!'; return x / y;});
     },
     '-' : function(args, env){
         return nbrReduction('-', args, env, function(x, y){return x - y;});
@@ -71,10 +71,16 @@ var functions = {
         return 0;
     },
     'set!' : function(args, env){
+	if(!env.hasOwnProperty(args[0]))
+		throw args[0] + ' is not defined!';
+
         env[args[0]] = evalScheem(args[1], env);
         return 0;
     },
     'begin' : function(args, env){
+	if(args.length == 0)
+		throw 'No body for begin!';
+
         // Eval head
         var res = evalScheem(args[0], env);
             
@@ -99,12 +105,53 @@ var functions = {
         return [evalScheem(args[0], env)].concat(evalScheem(args[1], env));
     },
     'car':function(args, env){
-        return evalScheem(args[0], env)[0];
+	if(!args || args.constructor != Array || args.length == 0)
+		throw 'No args for car!';
+
+	if(args.length > 1)
+		throw 'Weird number of args for car (1)!'
+
+	var evaled = evalScheem(args[0], env);
+
+	if(!evaled)
+		throw 'Args evaluated to empty object in car!';
+
+	if(evaled.constructor != Array)
+		throw 'Evaluated arg is not an Array in car!';
+
+	if(evaled.length == 0)
+		throw 'Evaluated arg is an empty Array in car!';
+
+        return evaled[0];
     },
     'cdr':function(args, env){
-        return evalScheem(args[0], env).slice(1);
+	if(!args || args.constructor != Array || args.length == 0)
+                throw 'No args for cdr!';
+
+        if(args.length > 1)
+                throw 'Weird number of args for cdr (1)!'
+
+	var evaled = evalScheem(args[0], env);
+
+        if(!evaled)
+                throw 'Args evaluated to empty object in cdr!';
+
+        if(evaled.constructor != Array)
+                throw 'Evaluated arg is not an Array in cdr!';
+
+        if(evaled.length == 0)
+                throw 'Evaluated arg is an empty Array in cdr!';
+
+	// This does like in Common Lisp, (cdr '(a)) => '()
+        return evaled.slice(1);
     },
     'if':function(args, env){
+	if(!args || args.constructor != Array || args.length == 0)
+                throw 'No args for if!';
+        
+        if(args.length != 3)
+                throw 'Weird number of args for if (3)!';
+
         return evalScheem(args[0], env) == '#t' ? evalScheem(args[1], env) : evalScheem(args[2], env);
     }
 };
