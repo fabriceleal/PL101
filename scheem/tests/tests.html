@@ -9,13 +9,43 @@
   </script>
   <script src="tests_files/mocha.js">
   </script>
+  <script src="tests_files/get_data.js">
+  </script>
   <script>mocha.setup('tdd')</script>
-  <script src="../interpreter.js"></script>
+  <script src="interpreter.js"></script>
   <script>
-var assert = chai.assert;
+	var assert = chai.assert;
+
+	$(function(){
+			getData('tests.json', function(tests){
+				tests.forEach(function(item){
+					suite(item.suite, function(){
+						item.tests.forEach(function(thisTest){
+							
+							// "Compile" the function, or it won't appear in the html :|
+							var compiled = eval('(function(){assert.deepEqual( evalScheem(' + 
+									JSON.stringify(thisTest.test) + ', ' + 
+									JSON.stringify(thisTest.env)+') , ' + 
+									JSON.stringify(thisTest.expected) + ' );})');
+							//---
+
+							test(thisTest.description, compiled /*function(){
+								assert.deepEqual(
+										evalScheem(thisTest.test, thisTest.env),
+										thisTest.expected
+								);
+							}*/);
+
+						});
+					});
+				});
+
+				mocha.run();
+			});
+	});
 
 // Some unit tests
-
+/*
 suite('quote', function() {
     test('a number', function() {
         assert.deepEqual(
@@ -61,18 +91,13 @@ suite('add', function() {
             4
         );
     })
-});
+});*/
 
   </script>
   <script>
-    $(function(){
-	// FIXME Running twice :| ...
-      //mocha.run();
-    });
+
   </script>
 </head>
 <body>
-  <div id="mocha"><ul id="stats"><li class="progress"><canvas width="40" height="40"></canvas></li><li class="passes">passes: <em>5</em></li><li class="failures">failures: <em>1</em></li><li class="duration">duration: <em>0.33</em>s</li></ul><div class="suite"><h1>quote</h1><div><div class="test pass fast"><h2>a number<span class="duration">1ms</span></h2><pre style="display: none;"><code>assert.deepEqual(evalScheem(["quote", <span class="number">3</span>], {}), <span class="number">3</span>);</code></pre></div><div class="test pass fast"><h2>an atom<span class="duration">0ms</span></h2><pre style="display: none;"><code>assert.deepEqual(evalScheem(["quote", "dog"], {}), "dog");</code></pre></div><div class="test pass fast"><h2>a list<span class="duration">1ms</span></h2><pre style="display: none;"><code>assert.deepEqual(evalScheem(["quote", [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]], {}), [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</code></pre></div></div></div><div class="suite"><h1>add</h1><div><div class="test pass fast"><h2>two numbers<span class="duration">0ms</span></h2><pre style="display: none;"><code>assert.deepEqual(evalScheem(["+", <span class="number">3</span>, <span class="number">5</span>], {}), <span class="number">8</span>);</code></pre></div><div class="test pass fast"><h2>a number and an expression<span class="duration">0ms</span></h2><pre style="display: none;"><code>assert.deepEqual(evalScheem(["+", <span class="number">3</span>, ["+", <span class="number">2</span>, <span class="number">2</span>]], {}), <span class="number">7</span>);</code></pre></div><div class="test fail"><h2>a dog and a cat</h2><pre class="error">expected NaN to equal 42</pre><pre style="display: none;"><code>assert.deepEqual(evalScheem(["+", "dog", "cat"], {}), <span class="number">42</span>);</code></pre></div></div></div></div>
-
-
+	<div id="mocha"></div>
 </body></html>

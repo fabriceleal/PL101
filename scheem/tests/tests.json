@@ -1,0 +1,54 @@
+[
+	{
+		"suite" : "quote",
+		"tests" : [
+			{
+				"description" 	: "a number",
+				"test" 			: ["quote", 3],
+				"env"  			: {},
+				"expected" 		: 3
+			},
+			{
+				"description"	: "an atom",
+				"test"			: ["quote", "dog"],
+				"env"				: {},
+				"expected"		: "dog"
+			},
+			{
+				"description"	: "a list",
+				"test"			: ["quote", [1, 2, 3]],
+				"env"				: {},
+				"expected"		: [1, 2, 3]
+			}
+		]
+	},
+	{
+		"suite" : "add",
+		"tests" : [
+			{
+				"description" 	: "...",
+				"test" 			: ["quote", 3],
+				"env"  			: {},
+				"expected" 		: 3
+			},
+			{
+				"description"	: "...",
+				"test"			: ["quote", "dog"],
+				"env"				: {},
+				"expected"		: "dog"
+			},
+			{
+				"description"	: "...",
+				"test"			: ["quote", [1, 2, 3]],
+				"env"				: {},
+				"expected"		: [1, 2, 3]
+			},
+			{
+				"description"	: "...",
+				"test"			: ["quote", [1, 2, 3]],
+				"env"				: {},
+				"expected"		: [1, 2, 3]
+			}
+		]
+	}
+]
