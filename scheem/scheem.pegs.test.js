@@ -32,6 +32,7 @@ fs.readFile('scheem.pegs', 'utf-8', function(err, data){
 							var parsed = parse(test.test);
 							try{
 								assert.deepEqual(parsed, test.expected);
+								// :| "3" and 3 are the same. Wtf?
 								succeded=succeded+1;
 							}catch(err){
 								console.error('Failed test #' + idx + ' of file ' + item);

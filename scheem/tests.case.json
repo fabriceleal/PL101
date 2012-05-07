@@ -70,5 +70,9 @@
 	{
 		"test" : "\n\n\n;; A comment\n\n;; Another comment\n\n(a b c)  ;; A comment in the same line, after some whitespace\n;;Another comment\n\n\n;;Yet another comment",
 		"expected" : ["a", "b", "c"]
+	},
+	{
+		"test" : "3",
+		"expected": 3
 	}
 ]
