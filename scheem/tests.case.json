@@ -9,7 +9,11 @@
 	},
 	{
 		"test" : "123",
-		"expected" : "123"
+		"expected" : 123
+	},
+	{
+		"test" : "123.23",
+		"expected" : 123.23
 	},
 	{
 		"test" : "(a b (c (e f)))",
