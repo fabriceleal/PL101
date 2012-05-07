@@ -29,32 +29,42 @@ var isNumber = function(arg){
 	return typeof arg !== 'number';
 }
 
+var nbrReduction = function(name, args, env, mathFun){
+	// Validate args
+	if(!(args) || args.constructor != Array || args.length == 0){
+                throw name + ' called without parameters!';
+        }
+
+	// Parse head
+        var parsed = evalScheem(args[0], env);
+
+        // If head is not a number
+        if(isNumber(parsed)){
+                throw 'There are arguments in ' + name + ' that are not numbers!';
+        }
+
+	// Call recursively if there are any more args
+	if(args.length > 1){
+		return mathFun(parsed, nbrReduction(name, args.slice(1), env, mathFun));
+	}
+	return parsed;
+}
+
 /*-------- The interpreter ---------*/
 
 var functions = {
     '+' : function(args, env){
 
-	if(!(args) || args.constructor != Array || args.length == 0){
-		throw '+ called without parameters!';
-	}
-
-	var parsed = evalScheem(args[0], env);
-
-	// If any arg is not a number
-	if(isNumber(parsed)){
-		throw 'There are arguments that are not numbers!';
-	}
-
-        return parsed + (args.length > 1 ? this['+'](args.slice(1), env) : 0);
+	return nbrReduction('+', args, env, function(x, y){return x + y;});
     },
     '*' : function(args, env){
-        return evalScheem(args[0], env) * evalScheem(args[1], env);
+	return nbrReduction('*', args, env, function(x, y){return x * y;});
     },
     '/' : function(args, env){
-        return evalScheem(args[0], env) / evalScheem(args[1], env);
+        return nbrReduction('/', args, env, function(x, y){ return x / y;});
     },
     '-' : function(args, env){
-        return evalScheem(args[0], env) - evalScheem(args[1], env);
+        return nbrReduction('-', args, env, function(x, y){return x - y;});
     },
     'define' : function(args, env){
         env[args[0]] = evalScheem(args[1], env);
