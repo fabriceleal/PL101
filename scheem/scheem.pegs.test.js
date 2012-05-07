@@ -31,8 +31,15 @@ fs.readFile('scheem.pegs', 'utf-8', function(err, data){
 							run=run+1;
 							var parsed = parse(test.test);
 							try{
-								assert.deepEqual(parsed, test.expected);
-								// :| "3" and 3 are the same. Wtf?
+								// Deep equal handles passively numbers vs strings
+								if(typeof parsed === 'string' && test.expected === 'number'){
+									throw 'typeof dont match';
+								}else if(typeof parsed === 'number' && typeof test.expected === 'string'){
+									throw 'typeof dont match';
+								}else{
+									assert.deepEqual(parsed, test.expected);
+								}
+
 								succeded=succeded+1;
 							}catch(err){
 								console.error('Failed test #' + idx + ' of file ' + item);
