@@ -13,10 +13,11 @@
   </script>
   <script>mocha.setup('tdd')</script>
   <script src="interpreter.js"></script>
+  <script src="evalScheemString.js"></script>
   <script>
 	var assert = chai.assert;
 
-	var SCHEEM;
+	var SCHEEM = null;
 
 	$(function(){
 			getData('parser.js', function(compiled){
@@ -90,7 +91,43 @@
 									});
 								})(interpreterTests); // Run interpreter tests
 
-								mocha.run();
+
+								getData('evalScheemString.tests.json', function(plTests){
+
+										// Run pl tests
+										(function(tests){
+											tests.forEach(function(item){
+												suite(item.suite, function(){
+													item.tests.forEach(function(thisTest){
+
+														var compiled = null;
+
+														// "Compile" the function, or it won't appear in the html :|
+														if(thisTest.expected){
+															// Expect cool output
+															compiled = eval('(function(){assert.deepEqual( evalScheemString(' + 
+																	JSON.stringify(thisTest.test) + ', ' + 
+																	JSON.stringify(thisTest.env)+') , ' + 
+																	JSON.stringify(thisTest.expected) + ' );})');
+															//---
+														}else{
+															// Expect exception
+															compiled = eval('(function(){ assert.throws(function(){ evalScheemString(' + 
+																	JSON.stringify(thisTest.test) + ', ' + 
+																	JSON.stringify(thisTest.env) + ') }); })');
+															//---
+														}
+
+														test(thisTest.description, compiled);
+
+													});
+												});
+											});
+										})(plTests); // Run pl tests
+
+
+										mocha.run();
+								});
 
 						}); // getData('interpreter.tests.json', ...
 
