@@ -50,5 +50,51 @@
 				"expected"		: 4
 			}
 		]
+	},
+	{
+		"suite" : "=",
+		"tests" : [
+			{
+				"description" : "one equals one",
+				"test" : ["=", 1, 1],
+				"env" : {},
+				"expected" : "#t"
+			},
+			{
+				"description" : "one equals two",
+				"test" : ["=", 1, 2],
+				"env" : {},
+				"expected" : "#f"
+			}
+		]
+	},
+	{
+		"suite" : "if",
+		"tests" : [
+			{
+				"description" : "add in true branch",
+				"test" : ["if", ["=", 1, 1], ["+", 2, 2], ["+", 5, 5]],
+				"env"  : {},
+				"expected" : 4
+			},
+			{
+				"description" : "add in false branch",
+				"test" : ["if", ["=", 1, 2], ["+", 2, 2], ["+", 5, 5]],
+				"env"  : {},
+				"expected" : 10
+			},
+			{
+				"description" : "atom in true branch",
+				"test" : ["if", ["=", 1, 1], ["quote", "duck"], ["quote", "pig"]],
+				"env"  : {},
+				"expected" : "duck"
+			},
+			{
+				"description" : "atom in false branch",
+				"test" : ["if", ["=", 1, 2], ["quote", "duck"], ["quote", "pig"]],
+				"env"  : {},
+				"expected" : "pig"
+			}
+		]
 	}
 ]
