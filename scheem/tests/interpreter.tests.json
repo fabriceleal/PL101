@@ -215,10 +215,22 @@
 		"suite" : "let-one",
 		"tests" : [
 			{
-				"description" : "",
+				"description" : "body with atom",
 				"test" : ["let-one", "a", 5, "a"],
 				"env": { "bindings": { "a" : 10 }, "outer" : {}},
 				"expected": 5
+			},
+			{
+				"description" : "body with add",
+				"test" : ["let-one", "a", 5, ["+", "a", "a"]],
+				"env": { "bindings": { "a" : 10 }, "outer" : {}},
+				"expected": 10
+			},
+			{
+				"description" : "body with let-one with add as expr and add as body",
+				"test" : ["let-one", "a", 5, ["let-one", "b", ["+", 2, 2], ["+", "a", "b"]]],
+				"env": { "bindings": { "a" : 7, "b" : 15 }, "outer" : {}},
+				"expected": 9
 			}
 		]
 	}

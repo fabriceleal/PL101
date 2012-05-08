@@ -168,10 +168,12 @@ var functions = {
     },
     'let-one':function(args, env){
 	// Creates a new env, shadowing the previous one
+	var varExprEvaled = evalScheem(args[1], env)
 	var myEnv = {
-		bindings: { args[0] : evalScheem(args[1], env) },
-		outer : env
+		'bindings': { },
+		'outer' : env
 	};
+	myEnv.bindings[args[0]] = varExprEvaled;
 	
 	return evalScheem(args[2], myEnv);
     }
