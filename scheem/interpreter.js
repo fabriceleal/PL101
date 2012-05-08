@@ -193,12 +193,34 @@ var functions = {
     'lambda-one':function(args, env){
 	var argName = args[0];
 	var body = args[1];
+
+	// TODO Validate if argName is not an array
 	
-	// FIXME Now I have a problem. If I use env above, I don't have recursion; If I use myEnv, I don't have lexical scoping
+	// FIXME Now I have a problem. If I use env, I don't have recursion; If I use myEnv, I don't have closures
 
 	return function(myArgs, myEnv){
 		return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], env /*Ignore myEnv. Capture the env of lambda.*/);
 	};
+    },
+    'lambda':function(args, env){
+	var argNames = args[0];
+	var body = args[1];
+
+	return function(myArgs, myEnv){
+		// Shadow env with args
+		var callingEnv = env;
+
+		// FIXME Now I have a problem. If I use env, I don't have recursion; If I use myEnv, I don't have closures
+		var toCall = body;
+	
+		// Build body	
+		argNames.forEach(function(item, idx){
+			toCall = ['let-one', item, myArgs[idx], toCall];
+		});
+
+		// Call evalScheem
+		return evalScheem(toCall, callingEnv);
+	}
     }
 };
 

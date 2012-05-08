@@ -250,5 +250,22 @@
 				"expected" : 6
 			}
 		]
+	},
+	{
+		"suite" : "lambda",
+		"tests" : [
+			{
+				"description": "Arg order (1/2)",
+				"test" : [["lambda", ["a", "b"], ["/", "a", "b"]], 1, 2],
+				"env" : {"bindings" : {}, "outer":{}},
+				"expected" : 0.5
+			},
+			{
+				"description": "Arg order (2/1)",
+				"test" : [["lambda", ["a", "b"], ["/", "b", "a"]], 1, 2],
+				"env" : {"bindings" : {}, "outer":{}},
+				"expected" : 2
+			}
+		]
 	}
 ]
