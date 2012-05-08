@@ -165,6 +165,15 @@ var functions = {
                 throw 'Weird number of args for if (3)!';
 
         return evalScheem(args[0], env) == '#t' ? evalScheem(args[1], env) : evalScheem(args[2], env);
+    },
+    'let-one':function(args, env){
+	// Creates a new env, shadowing the previous one
+	var myEnv = {
+		bindings: { args[0] : evalScheem(args[1], env) },
+		outer : env
+	};
+	
+	return evalScheem(args[2], myEnv);
     }
 };
 

@@ -217,7 +217,7 @@
 			{
 				"description" : "",
 				"test" : ["let-one", "a", 5, "a"],
-				"env": { "bindings": {}, "outer" : {}},
+				"env": { "bindings": { "a" : 10 }, "outer" : {}},
 				"expected": 5
 			}
 		]
