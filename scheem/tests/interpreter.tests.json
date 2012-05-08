@@ -5,19 +5,19 @@
 			{
 				"description" 	: "a number",
 				"test" 			: ["quote", 3],
-				"env"  			: {},
+				"env"  			: {"bindings": {}, "outer" : {}},
 				"expected" 		: 3
 			},
 			{
 				"description"	: "an atom",
 				"test"			: ["quote", "dog"],
-				"env"				: {},
+				"env"				: {"bindings": {}, "outer" : {}},
 				"expected"		: "dog"
 			},
 			{
 				"description"	: "a list",
 				"test"			: ["quote", [1, 2, 3]],
-				"env"				: {},
+				"env"				: {"bindings": {}, "outer" : {}},
 				"expected"		: [1, 2, 3]
 			}
 		]
@@ -28,7 +28,7 @@
 			{
 				"description" : "function execution",
 				"test" : ["+", "b", "c"],
-				"env" : {"b":2, "c":2},
+				"env" : {"bindings": {"b":2, "c":2}, "outer" : {}},
 				"expected":4
 			}
 		]
@@ -39,35 +39,35 @@
 			{
 				"description" 	: "without args",
 				"test" 			: ["+"],
-				"env"  			: {}
+				"env"  			: { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" 	: "5 numbers",
 				"test" 			: ["+", 1, 2, 3, 4, 5],
-				"env"  			: {},
+				"env"  			: { "bindings": {}, "outer" : {}},
 				"expected"		: 15
 			},
 			{
 				"description" 	: "two numbers",
 				"test" 			: ["+", 3, 5],
-				"env"  			: {},
+				"env"  			: { "bindings": {}, "outer" : {}},
 				"expected" 		: 8
 			},
 			{
 				"description"	: "a number and an expression",
 				"test"			: ["+", 3, ["+", 2, 2]],
-				"env"				: {},
+				"env"				: { "bindings": {}, "outer" : {}},
 				"expected"		: 7
 			},
 			{
 				"description"	: "a dog and a cat",
 				"test"			: ["+", "dog", "cat"],
-				"env"				: {}
+				"env"				: { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description"	: "two plus two",
 				"test"			: ["+", 2, 2],
-				"env"				: {},
+				"env"				: { "bindings": {}, "outer" : {}},
 				"expected"		: 4
 			}
 		]
@@ -78,7 +78,7 @@
 			{
 				"description" : " 1 / 0 ",
 				"test" : ["/", 1, 0],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			}
 		]
 	},
@@ -88,13 +88,13 @@
 			{
 				"description" : "one equals one",
 				"test" : ["=", 1, 1],
-				"env" : {},
+				"env" : { "bindings": {}, "outer" : {}},
 				"expected" : "#t"
 			},
 			{
 				"description" : "one equals two",
 				"test" : ["=", 1, 2],
-				"env" : {},
+				"env" : { "bindings": {}, "outer" : {}},
 				"expected" : "#f"
 			}
 		]
@@ -105,28 +105,28 @@
 			{
 				"description" : "Normal list",
 				"test" : ["car", ["quote", ["a", "b", "c"]]],
-				"env" : {},
+				"env" : { "bindings": {}, "outer" : {}},
 				"expected" : "a"
 			},
 			{
 				"description" : "Empty list",
 				"test" : ["car", ["quote", []]],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "More than enough!",
 				"test" : ["car", ["quote", ["b"]], ["quote", ["a"]]],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "Not a list!",
 				"test" : ["car", ["+", 2, 2]],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "No args!",
 				"test" : ["car"],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			}
 		]
 	},
@@ -136,33 +136,33 @@
 			{
 				"description" : "Normal list",
 				"test" : ["cdr", ["quote", ["a", "b", "c"]]],
-				"env" : {},
+				"env" : { "bindings": {}, "outer" : {}},
 				"expected" : ["b", "c"]
 			},
 			{
 				"description" : "Empty list",
 				"test" : ["cdr", ["quote", []]],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "More than enough!",
 				"test" : ["cdr", ["quote", ["b"]], ["quote", ["a"]]],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "Not a list!",
 				"test" : ["cdr", ["+", 2, 2]],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "No args!",
 				"test" : ["cdr"],
-				"env" : {}
+				"env" : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "List with no tail!",
 				"test" : ["cdr", ["quote", ["a"]]],
-				"env" : {},
+				"env" : { "bindings": {}, "outer" : {}},
 				"expected" : []
 			}
 		]
@@ -173,41 +173,52 @@
 			{
 				"description" : "add in true branch",
 				"test" : ["if", ["=", 1, 1], ["+", 2, 2], ["+", 5, 5]],
-				"env"  : {},
+				"env"  : { "bindings": {}, "outer" : {}},
 				"expected" : 4
 			},
 			{
 				"description" : "add in false branch",
 				"test" : ["if", ["=", 1, 2], ["+", 2, 2], ["+", 5, 5]],
-				"env"  : {},
+				"env"  : { "bindings": {}, "outer" : {}},
 				"expected" : 10
 			},
 			{
 				"description" : "atom in true branch",
 				"test" : ["if", ["=", 1, 1], ["quote", "duck"], ["quote", "pig"]],
-				"env"  : {},
+				"env"  : { "bindings": {}, "outer" : {}},
 				"expected" : "duck"
 			},
 			{
 				"description" : "atom in false branch",
 				"test" : ["if", ["=", 1, 2], ["quote", "duck"], ["quote", "pig"]],
-				"env"  : {},
+				"env"  : { "bindings": {}, "outer" : {}},
 				"expected" : "pig"
 			},
 			{
 				"description" : "Too much args!",
 				"test" : ["if", ["=", 1, 2], ["quote", "duck"], ["quote", "pig"], ["quote", "duck"]],
-				"env"  : {}
+				"env"  : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "Not enough args!",
 				"test" : ["if", ["=", 1, 2], ["quote", "duck"]],
-				"env"  : {}
+				"env"  : { "bindings": {}, "outer" : {}}
 			},
 			{
 				"description" : "No args!",
 				"test" : ["if"],
-				"env"  : {}
+				"env"  : { "bindings": {}, "outer" : {}}
+			}
+		]
+	},
+	{
+		"suite" : "let-one",
+		"tests" : [
+			{
+				"description" : "",
+				"test" : ["let-one", "a", 5, "a"],
+				"env": { "bindings": {}, "outer" : {}},
+				"expected": 5
 			}
 		]
 	}

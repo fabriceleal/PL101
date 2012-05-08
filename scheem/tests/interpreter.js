@@ -26,7 +26,7 @@ var parseList = function(lst, env){
 };
 
 var isNumber = function(arg){
-	return typeof arg !== 'number';
+	return typeof arg === 'number';
 }
 
 var nbrReduction = function(name, args, env, mathFun){
@@ -40,7 +40,7 @@ var nbrReduction = function(name, args, env, mathFun){
 
         // If head is not a number
         if(!isNumber(parsed)){
-                throw 'There are arguments in ' + name + ' that are not numbers!';
+                throw 'There are arguments (' + parsed +') in ' + name + ' that are not numbers!';
         }
 
 	// Call recursively if there are any more args
