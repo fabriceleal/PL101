@@ -62,6 +62,21 @@ var lookup = function (env, v) {
     return lookup(env.outer, v);
 };
 
+var update = function (env, v, val) {
+    // TODO If not defined, throw error!
+    if(!env || !env.bindings){
+        return;
+    }
+    
+    if(env.bindings.hasOwnProperty(v)){
+        env.bindings[v] = val;
+        return;
+    }
+    
+    update(env.outer, v, val);
+};
+
+
 /*-------- The interpreter ---------*/
 
 var functions = {
@@ -79,14 +94,13 @@ var functions = {
         return nbrReduction('-', args, env, function(x, y){return x - y;});
     },
     'define' : function(args, env){
-        env[args[0]] = evalScheem(args[1], env);
+	// TODO Check if already defined!
+
+        env.bindings[args[0]] = evalScheem(args[1], env);
         return 0;
     },
     'set!' : function(args, env){
-	if(!env.hasOwnProperty(args[0]))
-		throw args[0] + ' is not defined!';
-
-        env[args[0]] = evalScheem(args[1], env);
+	update(env, args[0], args[1]);
         return 0;
     },
     'begin' : function(args, env){
@@ -190,7 +204,7 @@ var evalScheem = function (expr, env) {
         return lookup(env, expr);
     }
     // Look at head of list for operation
-    if(functions[expr[0]]){
+    if(functions.hasOwnProperty(expr[0])){
         return functions[expr[0]](expr.slice(1), env);
     }
 };
