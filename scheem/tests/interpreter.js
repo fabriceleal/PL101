@@ -94,8 +94,7 @@ var functions = {
         return nbrReduction('-', args, env, function(x, y){return x - y;});
     },
     'define' : function(args, env){
-	// TODO Check if already defined!
-
+	// This is equivalent to the ex6 from chap5 (funcs5.js)
         env.bindings[args[0]] = evalScheem(args[1], env);
         return 0;
     },
