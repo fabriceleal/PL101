@@ -190,6 +190,14 @@ var functions = {
 	myEnv.bindings[args[0]] = varExprEvaled;
 	
 	return evalScheem(args[2], myEnv);
+    },
+    'lambda-one':function(args, env){
+	var argName = args[0];
+	var body = args[1];
+	
+	return function(myArgs, myEnv){
+		return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], myEnv);
+	};
     }
 };
 
@@ -211,7 +219,7 @@ var evalScheem = function (expr, env) {
     // Assume that is user defined function, returned by evaling the head
     var tmp = evalScheem(expr[0], env);
     if(tmp){
-	return (tmp)(expr.slice(1), env);
+	return tmp(expr.slice(1), env);
     }
 };
 

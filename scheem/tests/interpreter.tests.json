@@ -233,5 +233,22 @@
 				"expected": 9
 			}
 		]
+	},
+	{
+		"suite" : "lambda-one",
+		"tests" : [
+			{
+				"description": "Create, store and exec, constant result!",
+				"test" : ["let-one", "a", ["lambda-one", "x", 2], ["a", 1]],
+				"env" : {"bindings" : {}, "outer":{}},
+				"expected" : 2
+			},
+			{
+				"description": "Create, store and exec, inc!",
+				"test" : ["let-one", "a", ["lambda-one", "x", ["+", 1, "x"]], ["a", 5]],
+				"env" : {"bindings" : {}, "outer":{}},
+				"expected" : 6
+			}
+		]
 	}
 ]
