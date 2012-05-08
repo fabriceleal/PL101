@@ -23,6 +23,17 @@
 		]
 	},
 	{
+		"suite" : "variable ref",
+		"tests" : [
+			{
+				"description" : "function execution",
+				"test" : ["+", "b", "c"],
+				"env" : {"b":2, "c":2},
+				"expected":4
+			}
+		]
+	},
+	{
 		"suite" : "add",
 		"tests" : [
 			{

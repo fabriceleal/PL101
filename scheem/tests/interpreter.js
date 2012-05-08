@@ -21,8 +21,8 @@ Array.prototype.any = function(predicate){
 
 /*-------- Aux functions ------------*/
 
-var parseList = function(lst){
-	return lst.map(function(item){ return evalScheem(item);});
+var parseList = function(lst, env){
+	return lst.map(function(item){ return evalScheem(item, env);});
 };
 
 var isNumber = function(arg){
@@ -39,7 +39,7 @@ var nbrReduction = function(name, args, env, mathFun){
         var parsed = evalScheem(args[0], env);
 
         // If head is not a number
-        if(isNumber(parsed)){
+        if(!isNumber(parsed)){
                 throw 'There are arguments in ' + name + ' that are not numbers!';
         }
 
@@ -49,6 +49,18 @@ var nbrReduction = function(name, args, env, mathFun){
 	}
 	return parsed;
 }
+
+var lookup = function (env, v) {
+    if(!env || !env.bindings){
+        return null;
+    }
+
+    if(env.bindings.hasOwnProperty(v)){
+        return env.bindings[v];
+    }
+
+    return lookup(env.outer, v);
+};
 
 /*-------- The interpreter ---------*/
 
@@ -164,7 +176,7 @@ var evalScheem = function (expr, env) {
     }
     // Strings are variable references
     if (typeof expr === 'string') {
-        return env[expr];
+        return lookup(env, expr);
     }
     // Look at head of list for operation
     if(functions[expr[0]]){
