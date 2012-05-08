@@ -207,6 +207,12 @@ var evalScheem = function (expr, env) {
     if(functions.hasOwnProperty(expr[0])){
         return functions[expr[0]](expr.slice(1), env);
     }
+
+    // Assume that is user defined function, returned by evaling the head
+    var tmp = evalScheem(expr[0], env);
+    if(tmp){
+	return (tmp)(expr.slice(1), env);
+    }
 };
 
 
