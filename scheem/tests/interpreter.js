@@ -194,8 +194,10 @@ var functions = {
 	var argName = args[0];
 	var body = args[1];
 	
+	// FIXME Now I have a problem. If I use env above, I don't have recursion; If I use myEnv, I don't have lexical scoping
+
 	return function(myArgs, myEnv){
-		return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], myEnv);
+		return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], env /*Ignore myEnv. Capture the env of lambda.*/);
 	};
     }
 };

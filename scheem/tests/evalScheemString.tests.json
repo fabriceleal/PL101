@@ -5,7 +5,36 @@
 			{
 				"description" : "eval a sum",
 				"test" : "(+ 2 2)",
+				"env" : {"bindings":{}, "outer":{}},
 				"expected" : 4
+			}
+		]
+	},
+	{
+		"suite" :"recursion",
+		"tests" : [
+			{
+				"description": "factorial",
+				"test": "(begin (define factorial (lambda-one n (if (= n 1) 1 (* n (factorial (- n 1))) ))) (factorial 4))",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : 24
+			}
+		]
+	},
+	{
+		"suite" : "lexical scope",
+		"tests" :[
+			{
+				"description" : "Lexical scope, no shadowing",
+				"test" : "((let-one x 1 (lambda-one n (+ n x))) 5)",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : 6
+			},
+			{
+				"description" : "Lexical scope, with shadowing",
+				"test" : "(let-one x 10 ((let-one x 1 (lambda-one n (+ n x))) 5))",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : 6
 			}
 		]
 	}
