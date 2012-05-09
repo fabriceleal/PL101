@@ -5,7 +5,7 @@
 			{
 				"description" : "eval a sum",
 				"test" : "(+ 2 2)",
-				"env" : {"bindings":{}, "outer":{}},
+				"env" : {"bindings": {}, "outer":{}},
 				"expected" : 4
 			}
 		]

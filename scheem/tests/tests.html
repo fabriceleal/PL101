@@ -71,14 +71,14 @@
 												// "Compile" the function, or it won't appear in the html :|
 												if(thisTest.expected){
 													// Expect cool output
-													compiled = eval('(function(){assert.deepEqual( evalScheem(' + 
+													compiled = eval('(function(){assert.deepEqual( evalScheemExternal(' + 
 															JSON.stringify(thisTest.test) + ', ' + 
 															JSON.stringify(thisTest.env)+') , ' + 
 															JSON.stringify(thisTest.expected) + ' );})');
 													//---
 												}else{
 													// Expect exception
-													compiled = eval('(function(){ assert.throws(function(){ evalScheem(' + 
+													compiled = eval('(function(){ assert.throws(function(){ evalScheemExternal(' + 
 															JSON.stringify(thisTest.test) + ', ' + 
 															JSON.stringify(thisTest.env) + ') }); })');
 													//---
