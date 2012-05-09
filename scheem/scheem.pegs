@@ -67,8 +67,10 @@ whitespace =
 
 // A list of expressions
 list_expressions =
-	"(" head:wild_exp tail:wild_exp* ")"
-    { return [ head ].concat(tail); }
+		"(" head:wild_exp tail:wild_exp* ")"
+	{ return [ head ].concat(tail); }
+	/ 	"(" whitespace* ")"
+	{ return []; }
 
 newline =
 	"\r\n"
