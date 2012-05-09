@@ -198,7 +198,7 @@ var specials = {
 		var argNames = args[0];
 		var body = args[1];
 
-		return function(myArgs, myEnv){
+		return function(myArgs/*, myEnv*/){
 					// Shadow env with args
 					var callingEnv = {
 						bindings : {},
@@ -208,7 +208,7 @@ var specials = {
 					var toCall = body;
 
 					argNames.forEach(function(item, idx){
-						callingEnv.bindings[item] = evalScheem(myArgs[idx], myEnv);
+						callingEnv.bindings[item] = evalScheem(myArgs[idx], env/*myEnv*/);
 						//console.log('set ' + item + ' to ' + myArgs[idx]);
 					});
 
@@ -238,7 +238,7 @@ var initial_env = {
 		if(args[0].length == 0)
 			throw 'Evaluated arg is an empty Array in car!';
 
-		return args[0];
+		return args[0][0];
 	},
 	'cdr':function(args){
 		if(!args || args.constructor != Array || args.length == 0)
@@ -286,6 +286,9 @@ var initial_env = {
 };
 
 var evalScheem = function (expr, env) {
+	//console.log(expr);
+	//console.log(typeof expr);
+
 	if(expr == null) {
 		throw 'expr is null!';
 	}
@@ -307,6 +310,11 @@ var evalScheem = function (expr, env) {
 		return expr;
 	}
 
+	// Functions evaluate to themselves
+	if(typeof expr === 'function'){
+		return expr;
+	}
+
 	// Strings are variable references
 	if (typeof expr === 'string') {
 		//console.log('evaling as lookup');
@@ -324,8 +332,8 @@ var evalScheem = function (expr, env) {
 	if(tmp){
 		//console.log('evaling as user function');
 		return tmp(
-				expr.slice(1).map(
-						function(par){return evalScheem(par, env);}
+					expr.slice(1).map(
+							function(par){return evalScheem(par, env);}
 				));
 	}
 };
