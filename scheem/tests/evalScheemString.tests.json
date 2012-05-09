@@ -43,5 +43,34 @@
 				"expected" : 6
 			}
 		]
+	},
+	{
+		"suite" : "quote",
+		"tests" : [
+			{
+				"description" : "Quote on Atom",
+				"test" : "'a",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : "a"
+			},
+			{
+				"description" : "Quote on List",
+				"test" : "'(a b c)",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : ["a", "b", "c"]
+			},
+			{
+				"description" : "Quote on Empty List",
+				"test" : "'()",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : []
+			},
+			{
+				"description" : "Quote on Function Call",
+				"test" : "(cdr '(a b c))",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : ["b", "c"]
+			}
+		]
 	}
 ]

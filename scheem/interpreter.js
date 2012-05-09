@@ -282,6 +282,10 @@ var initial_env = {
 	},
 	'=' : function(args){
 		return args[0] == args[1] ? '#t' : '#f';
+	},
+	'emptyp' : function(args){
+		// Like in common-lisp, NIL == '(). 
+		return (args[0] == null || (args[0].constructor == Array && args[0].length == 0)) ? '#t' : '#f' ;
 	}
 };
 

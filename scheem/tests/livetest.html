@@ -2,8 +2,7 @@
 <head>
   <meta charset="utf-8">
   <title>Scheem Live Demo</title>
-  <script src=
-    "http://nathansuniversity.com/js/jquery-1.7.1.min.js">
+  <script src="tests_files/jquery-1.js">
   </script>
   <script src="interpreter.js"></script>
 	<script src="tests_files/get_data.js"></script>
@@ -40,7 +39,7 @@
             var parsed = SCHEEM(user_text);
             log_console('Parsed: ' + JSON.stringify(parsed));
             try {
-                var result = evalScheem(parsed, {});
+                var result = evalScheemExternal(parsed, {});
                 log_console('Result: ' + JSON.stringify(result));
             }
             catch(e) {

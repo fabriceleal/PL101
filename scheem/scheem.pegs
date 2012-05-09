@@ -2,17 +2,13 @@
 
 start =
     expression
-  / quoted_expression
   / comment
-
-quoted_expression =
-        whitespace* "'" stuff:expression whitespace*
-    { return ["quote", stuff]; }
 
 // Any valid expression
 expression =
     wild_atom
   / wild_lstexp
+  / quoted_expression
 
 // A lone comment, that may or not end with a newline
 comment = 
@@ -38,6 +34,11 @@ atom =
 paircommwhite =
 	comment 
       / whitespace
+
+// quoted expression
+quoted_expression =
+        whitespace* "'" stuff:expression whitespace*
+    { return ["quote", stuff]; }
 
 // A valid atom with any number of trailing spaces (left and right) or comments
 wild_atom =

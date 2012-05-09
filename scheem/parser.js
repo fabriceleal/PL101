@@ -1,13 +1,13 @@
 function (input, startRule) {
       var parseFunctions = {
         "start": parse_start,
-        "quoted_expression": parse_quoted_expression,
         "expression": parse_expression,
         "comment": parse_comment,
         "decimalpart": parse_decimalpart,
         "number_str": parse_number_str,
         "atom": parse_atom,
         "paircommwhite": parse_paircommwhite,
+        "quoted_expression": parse_quoted_expression,
         "wild_atom": parse_wild_atom,
         "wild_exp": parse_wild_exp,
         "wild_lstexp": parse_wild_lstexp,
@@ -76,68 +76,7 @@ function (input, startRule) {
         
         result0 = parse_expression();
         if (result0 === null) {
-          result0 = parse_quoted_expression();
-          if (result0 === null) {
-            result0 = parse_comment();
-          }
-        }
-        return result0;
-      }
-      
-      function parse_quoted_expression() {
-        var result0, result1, result2, result3, result4;
-        var pos0, pos1;
-        
-        pos0 = pos;
-        pos1 = pos;
-        result0 = [];
-        result1 = parse_whitespace();
-        while (result1 !== null) {
-          result0.push(result1);
-          result1 = parse_whitespace();
-        }
-        if (result0 !== null) {
-          if (input.charCodeAt(pos) === 39) {
-            result1 = "'";
-            pos++;
-          } else {
-            result1 = null;
-            if (reportFailures === 0) {
-              matchFailed("\"'\"");
-            }
-          }
-          if (result1 !== null) {
-            result2 = parse_expression();
-            if (result2 !== null) {
-              result3 = [];
-              result4 = parse_whitespace();
-              while (result4 !== null) {
-                result3.push(result4);
-                result4 = parse_whitespace();
-              }
-              if (result3 !== null) {
-                result0 = [result0, result1, result2, result3];
-              } else {
-                result0 = null;
-                pos = pos1;
-              }
-            } else {
-              result0 = null;
-              pos = pos1;
-            }
-          } else {
-            result0 = null;
-            pos = pos1;
-          }
-        } else {
-          result0 = null;
-          pos = pos1;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, stuff) { return ["quote", stuff]; })(pos0, result0[2]);
-        }
-        if (result0 === null) {
-          pos = pos0;
+          result0 = parse_comment();
         }
         return result0;
       }
@@ -148,6 +87,9 @@ function (input, startRule) {
         result0 = parse_wild_atom();
         if (result0 === null) {
           result0 = parse_wild_lstexp();
+          if (result0 === null) {
+            result0 = parse_quoted_expression();
+          }
         }
         return result0;
       }
@@ -397,6 +339,64 @@ function (input, startRule) {
         result0 = parse_comment();
         if (result0 === null) {
           result0 = parse_whitespace();
+        }
+        return result0;
+      }
+      
+      function parse_quoted_expression() {
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1;
+        
+        pos0 = pos;
+        pos1 = pos;
+        result0 = [];
+        result1 = parse_whitespace();
+        while (result1 !== null) {
+          result0.push(result1);
+          result1 = parse_whitespace();
+        }
+        if (result0 !== null) {
+          if (input.charCodeAt(pos) === 39) {
+            result1 = "'";
+            pos++;
+          } else {
+            result1 = null;
+            if (reportFailures === 0) {
+              matchFailed("\"'\"");
+            }
+          }
+          if (result1 !== null) {
+            result2 = parse_expression();
+            if (result2 !== null) {
+              result3 = [];
+              result4 = parse_whitespace();
+              while (result4 !== null) {
+                result3.push(result4);
+                result4 = parse_whitespace();
+              }
+              if (result3 !== null) {
+                result0 = [result0, result1, result2, result3];
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, stuff) { return ["quote", stuff]; })(pos0, result0[2]);
+        }
+        if (result0 === null) {
+          pos = pos0;
         }
         return result0;
       }
