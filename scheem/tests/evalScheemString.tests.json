@@ -15,9 +15,15 @@
 		"tests" : [
 			{
 				"description": "factorial",
-				"test": "(begin (define factorial (lambda-one n (if (= n 1) 1 (* n (factorial (- n 1))) ))) (factorial 4))",
+				"test": "(begin (define factorial (lambda (n) (if (= n 1) 1 (* n (factorial (- n 1))) ))) (factorial 4))",
 				"env" : {"bindings":{}, "outer":{}},
 				"expected" : 24
+			},
+			{
+				"description": "factorial with external binding >:D",
+				"test": "(begin (define factorial (lambda (n) (if (= n 1) 1 (* n (factorial (- n 1))) ))) (factorial n))",
+				"env" : {"bindings":{ "n" : 5}, "outer":{}},
+				"expected" : 120
 			}
 		]
 	},

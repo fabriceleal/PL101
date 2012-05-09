@@ -30,10 +30,17 @@ var isNumber = function(arg){
 }
 
 var nbrReduction = function(name, args, env, mathFun){
+	//console.log('nbrReduction');
+	//console.log(args);
+
 	// Validate args
+	/* This is failing for some reason. FUCK YOU FIREFOX!
 	if(!(args) || args.constructor != Array || args.length == 0){
+		//console.log(args);
+		//console.log(args.constructor != Array);
+		//console.log(args.length);
                 throw name + ' called without parameters!';
-        }
+        }*/
 
 	// Parse head
         var parsed = evalScheem(args[0], env);
@@ -45,6 +52,8 @@ var nbrReduction = function(name, args, env, mathFun){
 
 	// Call recursively if there are any more args
 	if(args.length > 1){
+		//console.log(args.length);
+		//console.log(args.slice(1));
 		return mathFun(parsed, nbrReduction(name, args.slice(1), env, mathFun));
 	}
 	return parsed;
@@ -52,7 +61,8 @@ var nbrReduction = function(name, args, env, mathFun){
 
 var lookup = function (env, v) {
     if(!env || !env.bindings){
-        return null;
+	throw 'lookup couldnt find ' + v + ' in env!';
+//        return null;
     }
 
     if(env.bindings.hasOwnProperty(v)){
@@ -194,10 +204,6 @@ var functions = {
 	var argName = args[0];
 	var body = args[1];
 
-	// TODO Validate if argName is not an array
-	
-	// FIXME Now I have a problem. If I use env, I don't have recursion; If I use myEnv, I don't have closures
-
 	return function(myArgs, myEnv){
 		return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], env /*Ignore myEnv. Capture the env of lambda.*/);
 	};
@@ -208,16 +214,20 @@ var functions = {
 
 	return function(myArgs, myEnv){
 		// Shadow env with args
-		var callingEnv = env;
-
-		// FIXME Now I have a problem. If I use env, I don't have recursion; If I use myEnv, I don't have closures
+		var callingEnv = {
+			bindings : {},
+			outer : env
+		};
+		
 		var toCall = body;
 	
-		// Build body	
 		argNames.forEach(function(item, idx){
-			toCall = ['let-one', item, myArgs[idx], toCall];
+			callingEnv.bindings[item] = evalScheem(myArgs[idx], myEnv);
+			//console.log('set ' + item + ' to ' + myArgs[idx]);
 		});
 
+		//console.log(toCall);
+		//console.log(callingEnv);
 		// Call evalScheem
 		return evalScheem(toCall, callingEnv);
 	}
@@ -225,25 +235,43 @@ var functions = {
 };
 
 var evalScheem = function (expr, env) {
-    //console.log(expr);
+    if(expr == null) {
+	throw 'expr is null!';
+    }
+    if(env == null){
+	throw 'env is null!';
+    }
+	
     // Numbers evaluate to themselves
     if (typeof expr === 'number') {
+	//console.log('evaling as number');
         return expr;
     }
+    
     // Strings are variable references
     if (typeof expr === 'string') {
+	//console.log('evaling as lookup');
         return lookup(env, expr);
     }
+
     // Look at head of list for operation
     if(functions.hasOwnProperty(expr[0])){
+	//console.log('evaling as special form');
         return functions[expr[0]](expr.slice(1), env);
     }
 
     // Assume that is user defined function, returned by evaling the head
     var tmp = evalScheem(expr[0], env);
     if(tmp){
+	//console.log('evaling as user function');
 	return tmp(expr.slice(1), env);
     }
 };
+
+
+//--------------------------
+
+
+
 
 

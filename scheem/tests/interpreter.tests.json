@@ -69,6 +69,12 @@
 				"test"			: ["+", 2, 2],
 				"env"				: { "bindings": {}, "outer" : {}},
 				"expected"		: 4
+			},
+			{
+				"description"	: "with variable",
+				"test"			: ["+", "n", 2],
+				"env"				: {"bindings": {"n":1}, "outer" : {}},
+				"expected"		: 3
 			}
 		]
 	},
