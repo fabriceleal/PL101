@@ -238,7 +238,7 @@ var initial_env = {
 		if(args[0].length == 0)
 			throw 'Evaluated arg is an empty Array in car!';
 
-		return args[0];
+		return args[0][0];
 	},
 	'cdr':function(args){
 		if(!args || args.constructor != Array || args.length == 0)
