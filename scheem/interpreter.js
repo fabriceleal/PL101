@@ -315,9 +315,10 @@ var evalScheem = function (expr, env) {
 	}
 
 	// Functions evaluate to themselves
-	if(typeof expr === 'function'){
-		return expr;
-	}
+	// Comment this! in high order functions, you have to quote!
+	//if(typeof expr === 'function'){
+	//	return expr;
+	//}
 
 	// Strings are variable references
 	if (typeof expr === 'string') {
