@@ -164,6 +164,8 @@ var specials = {
 		return res;
 	},
 	'quote' : function(args, env){
+		console.log('quoting as-is:');
+		console.log(args[0]);
 		return args[0];
 	},
 	'if':function(args, env){
@@ -290,7 +292,7 @@ var initial_env = {
 };
 
 var evalScheem = function (expr, env) {
-	//console.log(expr);
+	console.log(expr);
 	//console.log(typeof expr);
 
 	if(expr == null) {
@@ -315,10 +317,9 @@ var evalScheem = function (expr, env) {
 	}
 
 	// Functions evaluate to themselves
-	// Comment this! in high order functions, you have to quote!
-	//if(typeof expr === 'function'){
-	//	return expr;
-	//}
+	if(typeof expr === 'function'){
+		return expr;
+	}
 
 	// Strings are variable references
 	if (typeof expr === 'string') {
@@ -334,6 +335,9 @@ var evalScheem = function (expr, env) {
 
 	// Assume that is user defined function, returned by evaling the head
 	var tmp = evalScheem(expr[0], env);
+	if(typeof tmp !== 'function')
+		throw 'Head of ' + JSON.stringify(expr) + ' is not a function!';
+
 	if(tmp){
 		//console.log('evaling as user function');
 		return tmp(
