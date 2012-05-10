@@ -192,15 +192,15 @@ var specials = {
 		var argName = args[0];
 		var body = args[1];
 
-		return 	function(myArgs, myEnv){
-						return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], env /*Ignore myEnv. Capture the env of lambda.*/);
+		return 	function(myArgs){
+						return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], env /*Capture the env of lambda.*/);
 					};
     },
     'lambda':function(args, env){
 		var argNames = args[0];
 		var body = args[1];
 
-		return function(myArgs/*, myEnv*/){
+		return function(myArgs){
 					// Shadow env with args
 					var callingEnv = {
 						bindings : {},
@@ -210,12 +210,9 @@ var specials = {
 					var toCall = body;
 
 					argNames.forEach(function(item, idx){
-						callingEnv.bindings[item] = evalScheem(myArgs[idx], env/*myEnv*/);
-						//console.log('set ' + item + ' to ' + myArgs[idx]);
+						callingEnv.bindings[item] = myArgs[idx];						
 					});
-
-					//console.log(toCall);
-					//console.log(callingEnv);
+					
 					// Call evalScheem
 					return evalScheem(toCall, callingEnv);
 				}

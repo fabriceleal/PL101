@@ -210,12 +210,9 @@ var specials = {
 					var toCall = body;
 
 					argNames.forEach(function(item, idx){
-						callingEnv.bindings[item] = evalScheem(myArgs[idx], env/*myEnv*/);
-						//console.log('set ' + item + ' to ' + myArgs[idx]);
+						callingEnv.bindings[item] = myArgs[idx];						
 					});
-
-					//console.log(toCall);
-					//console.log(callingEnv);
+					
 					// Call evalScheem
 					return evalScheem(toCall, callingEnv);
 				}
@@ -292,7 +289,7 @@ var initial_env = {
 };
 
 var evalScheem = function (expr, env) {
-	console.log(expr);
+	//console.log(expr);
 	//console.log(typeof expr);
 
 	if(expr == null) {
@@ -316,7 +313,7 @@ var evalScheem = function (expr, env) {
 		return expr;
 	}
 
-	// Functions evaluate to themselves
+	// Functions evaluate to themselves (just to be sure!)
 	if(typeof expr === 'function'){
 		return expr;
 	}

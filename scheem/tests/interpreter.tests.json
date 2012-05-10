@@ -274,7 +274,7 @@
 			},
 			{
 				"description": "High order",
-				"test" : [["lambda", ["f", "x"], ["f", "x", 5]], ["quote", ["lambda", ["x", "y"], ["+", "x", "y"]]], 2],
+				"test" : [["lambda", ["f", "x"], ["f", "x", 5]], ["lambda", ["x", "y"], ["+", "x", "y"]], 2],
 				"env" : {"bindings" : {}, "outer":{}},
 				"expected" : 7
 			},
