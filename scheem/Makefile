@@ -1,4 +1,6 @@
 
+PROJECT_HOME=~/projects/PL101_Pages
+
 final: parser.js
 
 parser.js: scheem.pegs build.js
@@ -9,5 +11,9 @@ clean:
 	rm parser.js
 
 .PHONY: deploy
+# Copy parser, interpreter and tests
 deploy:
-	cp parser.js tests/
+	cp parser.js $(PROJECT_HOME)
+	cp interpreter.js $(PROJECT_HOME)
+	cp tests/*.tests.json $(PROJECT_HOME)
+
