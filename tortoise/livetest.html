@@ -51,7 +51,7 @@ forward(100);
 					};
 					a.innerHTML = item.title;
 					$('#tests')[0].appendChild(a);
-					$('#tests').append('<br/ >');
+					$('#tests')[0].appendChild(document.createElement('br'));
 					console.log(item.title);
 				});
 			});

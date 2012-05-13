@@ -1,4 +1,4 @@
-// TURTLE
+// GRAPHIC ENV
 
 var GraphicEnv = function(id, onCreated){
 	this.paper = Raphael(id);
