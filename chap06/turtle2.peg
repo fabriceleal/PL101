@@ -1,14 +1,17 @@
-start
-    = number
-
-number_frac
-    = "." chars:[0-9]*
-        { return "." + chars.join(''); }
+expression = var_ref / primary
 
 number
-    = head:first_nbr_char chars:[0-9]* frac:number_frac?
-        { return parseFloat(head.concat(chars).join('') + frac); }
+    = chars:[0-9]+
+        { return parseFloat(chars.join('')); }
 
-first_nbr_char
-    = char:[\-0-9]
-    { return [ char ]; }
+identifier
+    = chars:[a-z]+
+        { return chars.join(''); }
+
+var_ref = id:identifier
+     { return { "tag":"ident", "name":id }; }
+
+primary
+    = number
+    / "(" expr:expression ")"
+        { return expr; }
