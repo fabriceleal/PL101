@@ -1,33 +1,63 @@
-var Turtle = function (id) {
-    var $elem = $('#' + id);
-    this.paper = Raphael(id);
-    this.originx = $elem.width() / 2;
-    this.originy = $elem.height() / 2;
-    this.clear();
+// TURTLE
+
+var GraphicEnv = function(id, onCreated){
+	this.paper = Raphael(id);
+	this.id = id;
+	this.clear();
 };
-Turtle.prototype.clear = function () {
-    this.paper.clear();
-    this.x = this.originx;
-    this.y = this.originy;
-    this.angle = 90;
-    this.width = 4;
-    this.opacity = 1.0;
-    this.color = '#00f';
-    this.pen = true;
-    this.turtleimg = undefined;
-    this.updateTurtle();
+
+GraphicEnv.prototype.clear = function(){
+	this.paper.clear();
+	this.turtles = {};
+
+	var $elem = $('#' + this.id);
+	createTurtle('default', 'black', $elem.width() / 2, $elem.height() / 2, env, this).assignEnv(env);
 };
+
+GraphicEnv.prototype.addTurtle = function(turtle){
+	turtle.paper = this.paper;
+	this.turtles[turtle.name] = turtle;
+	return turtle;
+};
+
+// TURTLE
+
+var Turtle = function(name, color, location){
+	this.name = name;
+	this.originx = location.x;
+	this.originy = location.y;
+	this.color = color;
+	this.paper = undefined;
+};
+
+Turtle.prototype.init = function () {
+	this.x = this.originx;
+	this.y = this.originy;
+	this.angle = 90;
+	this.width = 4;
+	this.opacity = 1.0;
+	this.pen = true;
+	this.turtleimg = undefined;
+	this.updateTurtle();
+
+	return this;
+};
+
 Turtle.prototype.updateTurtle = function () {
-    if(this.turtleimg === undefined) {
-        this.turtleimg = this.paper.image(
-            "livetest_files/turtle2.png",
-            0, 0, 64, 64);
-    }
-    this.turtleimg.attr({
-        x: this.x - 32,
-        y: this.y - 32,
-        transform: "r" + (-this.angle)});
-    this.turtleimg.toFront();
+	if(this.turtleimg === undefined) {
+		this.turtleimg = this.paper.image(
+				"livetest_files/turtle2.png",
+				0, 0, 64, 64);
+	}
+	this.turtleimg.attr({
+			x: this.x - 32,
+			y: this.y - 32,
+			transform: "r" + (-this.angle)});
+	// ---
+
+	this.turtleimg.toFront();
+
+	return this;
 };
 Turtle.prototype.setOpacity = function(opacity) {
     this.opacity = opacity;
@@ -59,6 +89,8 @@ Turtle.prototype.drawTo = function (x, y) {
     };
     var path = this.paper.path(Raphael.format("M{0},{1}L{2},{3}",
         x1, y1, x, y)).attr(params);
+
+	return this;
 };
 Turtle.prototype.forward = function (d) {
     var newx = this.x + Math.cos(Raphael.rad(this.angle)) * d;
@@ -92,6 +124,12 @@ Turtle.prototype.assignEnv = function(env){
 	add_binding(env, 'forward', function(d) { turtle.forward(d); });
 	add_binding(env, 'right', function(a) { turtle.right(a); });
 	add_binding(env, 'left', function(a) { turtle.left(a); });
+	add_binding(env, 'setOpacity', function(d) { turtle.setOpacity(d); });
+	add_binding(env, 'setWidth', function(w) { turtle.setWidth(w); });
+	add_binding(env, 'setColor', function(r, g, b) { turtle.setColor(r, g, b); });
+	add_binding(env, 'setPosition', function(x, y) { turtle.setPosition(x, y); });
+	add_binding(env, 'setHeading', function(a) { turtle.setHeading(a); });
+	add_binding(env, 'home', function() { turtle.home(); });
 }
 
 // Predifined operations
@@ -123,18 +161,7 @@ var operations = {
 	}
 };
 
-var env = { bindings:{} };
-
-function evalTyped(expr, resolved, env){
-	switch(resolved.type){
-		case 'binary':
-			return resolved.fun(
-					evalExpr(expr.left, env),
-					evalExpr(expr.right, env));
-		default:
-			throw 'Unknown type of operation: ' + resolved.type;
-	}
-}
+// AUX - bindings
 
 var add_binding = function (env, v, val) {
     env.bindings[v]=val;
@@ -159,12 +186,52 @@ var update = function (env, v, val) {
 	}
 
 	if(env.bindings.hasOwnProperty(v)){
+		if(typeof env.bindings[v] !== 'undefined' && typeof env.bindings[v] !== typeof val)
+			throw 'You cant store values in a slot that contains a value of another type! I wont let you!';
+
 		env.bindings[v] = val;
 		return;
 	}
 
 	update(env.outer, v, val);
 };
+
+
+// This is global :( because createTurtle needs to know about the graphic env
+var graphicsEnv = undefined;
+
+// Turtles are stored in the env
+
+// TORTOISE EVALUATION
+var initial_functions = {
+	'random' : function(){ return Math.random(); },
+	'randomInterval' : function(min, max){ return Math.random() * (max - min) + min; }
+};
+
+var env = { bindings: initial_functions };
+
+var createTurtle = function(name, color, originx, originy, env, grapEnv){
+	var newTurtle = new Turtle(name, color, { x: originx, y : originy });
+
+	// Add to graphics env (without assignEnv !!!)
+	grapEnv.addTurtle(newTurtle).init();
+
+	// Add turtle to env
+	add_binding(env, newTurtle.name, newTurtle);
+	
+	return newTurtle;
+};
+
+function evalTyped(expr, resolved, env){
+	switch(resolved.type){
+		case 'binary':
+			return resolved.fun(
+					evalExpr(expr.left, env),
+					evalExpr(expr.right, env));
+		default:
+			throw 'Unknown type of operation: ' + resolved.type;
+	}
+}
 
 function evalExpr(expr, env){
 	if(typeof expr === 'number'){
@@ -228,6 +295,17 @@ var evalStatement = function (stmt, env) {
                 val = evalStatements(stmt.body, env);
             }
             return val;
+        case 'with':
+				var turtle = lookup(env, stmt.expr);
+				if (turtle.constructor !== Turtle)
+					throw 'No such turtle ' + stmt.expr;
+			
+				var new_bindings = {};
+				var new_env = { bindings: new_bindings, outer: env};
+
+				turtle.assignEnv(new_env);
+
+				return evalStatements(stmt.body, new_env);			
         case 'define':
 		     var new_func = function() {		         
 		         var i;
@@ -242,6 +320,15 @@ var evalStatement = function (stmt, env) {
 		     };
 		     add_binding(env, stmt.name, new_func);
 		     return 0;
+        case 'turtle':
+				// FIXME For now, passed as is
+				var ev_args = stmt.args;
+
+				ev_args.push(env);
+				ev_args.push(graphicsEnv);
+				createTurtle.apply(null, ev_args);
+
+				return 0;
     }
 };
 
