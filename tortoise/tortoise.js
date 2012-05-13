@@ -1,21 +1,57 @@
+// TURTLE
+
+var GraphicEnv = function(id, onCreated){
+	var $elem = $('#' + id);
+	this.turtles = {};
+	this.paper = Raphael(id);
+
+	//onCreated(this);
+   // Create default turtle
+	this.addTurtle(new Turtle(
+			'default', 
+			'#00f', 
+			{ x: $elem.width() / 2, y: $elem.height() / 2})).init().assignEnv();
+};
+
+GraphicEnv.prototype.clear = function(){
+	this.paper.clear();
+};
+
+GraphicEnv.prototype.addTurtle = function(turtle){
+	this.turtles[turtle.name] = turtle;
+	this.turtles[turtle.name].paper = this.paper;
+	return turtle;
+}
+
+
+var Turtle = function(name, color, location){
+	this.name = name;
+	this.originx = location.x;
+	this.originy = location.y;
+	this.color = color;
+};
+
+/*
 var Turtle = function (id) {
     var $elem = $('#' + id);
     this.paper = Raphael(id);
     this.originx = $elem.width() / 2;
     this.originy = $elem.height() / 2;
-    this.clear();
-};
-Turtle.prototype.clear = function () {
-    this.paper.clear();
-    this.x = this.originx;
-    this.y = this.originy;
-    this.angle = 90;
-    this.width = 4;
-    this.opacity = 1.0;
-    this.color = '#00f';
-    this.pen = true;
-    this.turtleimg = undefined;
-    this.updateTurtle();
+    this.init();
+};*/
+
+Turtle.prototype.init = function () {
+	this.x = this.originx;
+	this.y = this.originy;
+	this.angle = 90;
+	this.width = 4;
+	this.opacity = 1.0;
+	this.color = '#00f';
+	this.pen = true;
+	this.turtleimg = undefined;
+	this.updateTurtle();
+
+	return this;
 };
 Turtle.prototype.updateTurtle = function () {
     if(this.turtleimg === undefined) {
@@ -123,6 +159,28 @@ var operations = {
 	}
 };
 
+
+
+// TURTLE MANAGEMENT
+
+var turtles = {
+	'leonardo' : {
+	},
+	'raphael' : {
+	},
+	'michelangelo' : {
+	},
+	'donatello' : {
+	}
+};
+
+
+// Turtles are stored in the env
+// Turtle stack is global
+
+
+// TORTOISE EVALUATION
+var turtle_stack = [];
 var env = { bindings:{} };
 
 function evalTyped(expr, resolved, env){
