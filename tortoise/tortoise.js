@@ -103,7 +103,7 @@ var operations = {
 	},
 	'>' : { 
 		type:'binary', 
-		fun:function(left, right){ return left < right; } 
+		fun:function(left, right){ return left > right; } 
 	},
 	'+' : {
 		type:'binary',
