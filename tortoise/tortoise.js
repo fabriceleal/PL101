@@ -1,23 +1,17 @@
 // TURTLE
 
 var GraphicEnv = function(id, onCreated){
-	var $elem = $('#' + id);
-	this.turtles = {};
 	this.paper = Raphael(id);
-
-	//onCreated(this);
-   // Create default turtle
-	this.addTurtle(new Turtle(
-			'default', 
-			'#00f', 
-			{ x: $elem.width() / 2, y: $elem.height() / 2} )).init().assignEnv(env);
+	this.id = id;
+	this.clear();
 };
 
 GraphicEnv.prototype.clear = function(){
 	this.paper.clear();
-	for (var key in this.turtles){
-		this.turtles[key].init();
-	}
+	this.turtles = {};
+
+	var $elem = $('#' + this.id);
+	createTurtle('default', 'red'/* '#00f'*/, $elem.width() / 2, $elem.height() / 2, env, this).assignEnv(env);
 };
 
 GraphicEnv.prototype.addTurtle = function(turtle){
@@ -42,7 +36,6 @@ Turtle.prototype.init = function () {
 	this.angle = 90;
 	this.width = 4;
 	this.opacity = 1.0;
-	this.color = '#00f';
 	this.pen = true;
 	this.turtleimg = undefined;
 	this.updateTurtle();
@@ -68,6 +61,7 @@ Turtle.prototype.updateTurtle = function () {
 };
 Turtle.prototype.setOpacity = function(opacity) {
     this.opacity = opacity;
+    this.updateTurtle();
 };
 Turtle.prototype.setWidth = function(width) {
     this.width = width;
@@ -131,6 +125,7 @@ Turtle.prototype.assignEnv = function(env){
 	add_binding(env, 'forward', function(d) { turtle.forward(d); });
 	add_binding(env, 'right', function(a) { turtle.right(a); });
 	add_binding(env, 'left', function(a) { turtle.left(a); });
+	add_binding(env, 'setOpacity', function(d) { turtle.setOpacity(d); });
 }
 
 // Predifined operations
@@ -162,40 +157,7 @@ var operations = {
 	}
 };
 
-
-
-// TURTLE MANAGEMENT
-
-var turtles = {
-	'leonardo' : {
-	},
-	'raphael' : {
-	},
-	'michelangelo' : {
-	},
-	'donatello' : {
-	}
-};
-
-
-// Turtles are stored in the env
-// Turtle stack is global
-
-
-// TORTOISE EVALUATION
-var turtle_stack = [];
-var env = { bindings:{} };
-
-function evalTyped(expr, resolved, env){
-	switch(resolved.type){
-		case 'binary':
-			return resolved.fun(
-					evalExpr(expr.left, env),
-					evalExpr(expr.right, env));
-		default:
-			throw 'Unknown type of operation: ' + resolved.type;
-	}
-}
+// AUX - bindings
 
 var add_binding = function (env, v, val) {
     env.bindings[v]=val;
@@ -220,12 +182,48 @@ var update = function (env, v, val) {
 	}
 
 	if(env.bindings.hasOwnProperty(v)){
+		if(typeof env.bindings[v] !== 'undefined' && typeof env.bindings[v] !== typeof val)
+			throw 'You cant store values in a slot that contains a value of another type! I wont let you!';
+
 		env.bindings[v] = val;
 		return;
 	}
 
 	update(env.outer, v, val);
 };
+
+
+// This is global :( because createTurtle needs to know about the graphic env
+var graphicsEnv = undefined;
+
+// Turtles are stored in the env
+
+// TORTOISE EVALUATION
+var env = { bindings:{} };
+
+var createTurtle = function(name, color, originx, originy, env, grapEnv){
+	var newTurtle = new Turtle(name, color, { x: originx, y : originy });
+
+	// Add to graphics env (without assignEnv !!!)
+	grapEnv.addTurtle(newTurtle).init();
+
+	// Add turtle to env
+	add_binding(env, newTurtle.name, newTurtle);
+	
+	return newTurtle;
+};
+
+
+function evalTyped(expr, resolved, env){
+	switch(resolved.type){
+		case 'binary':
+			return resolved.fun(
+					evalExpr(expr.left, env),
+					evalExpr(expr.right, env));
+		default:
+			throw 'Unknown type of operation: ' + resolved.type;
+	}
+}
 
 function evalExpr(expr, env){
 	if(typeof expr === 'number'){
@@ -289,6 +287,17 @@ var evalStatement = function (stmt, env) {
                 val = evalStatements(stmt.body, env);
             }
             return val;
+        case 'with':
+				var turtle = lookup(env, stmt.expr);
+				if (turtle.constructor !== Turtle)
+					throw 'No such turtle ' + stmt.expr;
+			
+				var new_bindings = {};
+				var new_env = { bindings: new_bindings, outer: env};
+
+				turtle.assignEnv(new_env);
+
+				return evalStatements(stmt.body, new_env);			
         case 'define':
 		     var new_func = function() {		         
 		         var i;
@@ -303,6 +312,15 @@ var evalStatement = function (stmt, env) {
 		     };
 		     add_binding(env, stmt.name, new_func);
 		     return 0;
+        case 'turtle':
+				// FIXME For now, passed as is
+				var ev_args = stmt.args;
+
+				ev_args.push(env);
+				ev_args.push(graphicsEnv);
+				createTurtle.apply(null, ev_args);
+
+				return 0;
     }
 };
 
