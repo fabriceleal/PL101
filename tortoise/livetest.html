@@ -11,7 +11,9 @@
 </head>
 <body>
 
-<textarea id="input" style="width:700px; height:300px;">
+<div id="tests"></div>
+
+<textarea id="input" style="width:700px; height:200px;">
 forward(100);
 </textarea>
 
@@ -22,30 +24,58 @@ forward(100);
 <div id="turtlecanvas" style="width:700px; height:600px; background-color: #eee;"></div>
 <script>
 	var TORTOISE = {};
+	// Download and compile parser
 	getData("parser.js", function(compiled){
 		TORTOISE.parse = compiled;
 	});
+
 </script>
 <script>
 		// After page load
 		$(function() {
+			
+			// Load tests
+			getData("index.json", function(compiled){
+				var stuff = [];
+				
+				compiled.forEach(function(item, idx){
+					// Download test
+					getDataRaw(item.file, function(raw){
+						stuff[idx] = raw;
+					});
+					
+					var a = document.createElement('a');
+					a.href = "#";
+					a.onclick = function(){
+						$('#input').val(stuff[idx]);
+					};
+					a.innerHTML = item.title;
+					$('#tests')[0].appendChild(a);
+					$('#tests').append('<br/ >');
+					console.log(item.title);
+				});
+			});
+
 			// Utility function to log messages
 			var log_console = function(msg) {
 				$('#console').append('<p>' + msg + '</p>');
 			};
 
-			var myTurtle = new Turtle("turtlecanvas");
-			myTurtle.assignEnv(env);
+			//var myTurtle = new Turtle("turtlecanvas");
+			//myTurtle.assignEnv(env);
+
+			graphicsEnv = new GraphicEnv("turtlecanvas");
 
 			$('#submitbutton').click(function() {
 				var user_text = $('#input').val();
 				$('#console').html('');
-				myTurtle.clear();
+				graphicsEnv.clear();
+
 				try {
 					var parsed = TORTOISE.parse(user_text);
 					try {
-						var result = evalStatements(parsed, env);
-						log_console('Evaled: ' + JSON.stringify(result));
+						var result = evalStatements(parsed, env);					
+						log_console('Success!');
 					}
 					catch(e) {
 						log_console('Eval Error: ' + e);
