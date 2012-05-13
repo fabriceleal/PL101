@@ -25,7 +25,9 @@ function (input, startRule) {
         "identifier": parse_identifier,
         "ws": parse_ws,
         "comma_expression": parse_comma_expression,
-        "arglist": parse_arglist
+        "arglist": parse_arglist,
+        "comma_identifier": parse_comma_identifier,
+        "idlist": parse_idlist
       };
       
       if (startRule !== undefined) {
@@ -117,9 +119,12 @@ function (input, startRule) {
           if (result0 === null) {
             result0 = parse_stat_define();
             if (result0 === null) {
-              result0 = parse_stat_assign();
+              result0 = parse_stat_repeat();
               if (result0 === null) {
-                result0 = parse_stat_expression();
+                result0 = parse_stat_assign();
+                if (result0 === null) {
+                  result0 = parse_stat_expression();
+                }
               }
             }
           }
@@ -343,7 +348,7 @@ function (input, startRule) {
                   if (result4 !== null) {
                     result5 = parse_ws();
                     if (result5 !== null) {
-                      result6 = parse_arglist();
+                      result6 = parse_idlist();
                       if (result6 !== null) {
                         result7 = parse_ws();
                         if (result7 !== null) {
@@ -1468,6 +1473,9 @@ function (input, startRule) {
               if (result0 === null) {
                 pos = pos0;
               }
+              if (result0 === null) {
+                result0 = parse_identifier();
+              }
             }
           }
         }
@@ -1635,6 +1643,81 @@ function (input, startRule) {
           while (result2 !== null) {
             result1.push(result2);
             result2 = parse_comma_expression();
+          }
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, first, rest) { return [first].concat(rest); })(pos0, result0[0], result0[1]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_comma_identifier() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        pos0 = pos;
+        pos1 = pos;
+        if (input.charCodeAt(pos) === 44) {
+          result0 = ",";
+          pos++;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\",\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_ws();
+          if (result1 !== null) {
+            result2 = parse_identifier();
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, expr) {return expr;})(pos0, result0[2]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_idlist() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_identifier();
+        if (result0 !== null) {
+          result1 = [];
+          result2 = parse_comma_identifier();
+          while (result2 !== null) {
+            result1.push(result2);
+            result2 = parse_comma_identifier();
           }
           if (result1 !== null) {
             result0 = [result0, result1];

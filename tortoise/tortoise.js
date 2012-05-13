@@ -88,9 +88,10 @@ Turtle.prototype.home = function() {
     this.setPosition(this.originx, this.originy);
 };
 Turtle.prototype.assignEnv = function(env){
-	add_binding(env, 'forward', function(d) { this.forward(d); });
-	add_binding(env, 'right', function(a) { this.right(a); });
-	add_binding(env, 'left', function(a) { this.left(a); });
+	var turtle = this;
+	add_binding(env, 'forward', function(d) { turtle.forward(d); });
+	add_binding(env, 'right', function(a) { turtle.right(a); });
+	add_binding(env, 'left', function(a) { turtle.left(a); });
 }
 
 // Predifined operations
@@ -100,13 +101,25 @@ var operations = {
 		type:'binary', 
 		fun:function(left, right){ return left < right; } 
 	},
+	'>' : { 
+		type:'binary', 
+		fun:function(left, right){ return left < right; } 
+	},
 	'+' : {
 		type:'binary',
 		fun:function(left, right) { return left + right; }
 	},
 	'*' : {
 		type:'binary',
-		fun:function(left, right) { return left + right; }
+		fun:function(left, right) { return left * right; }
+	},
+	'-' : {
+		type:'binary',
+		fun:function(left, right) { return left - right; }
+	},
+	'/' : {
+		type:'binary',
+		fun:function(left, right) { return left / right; }
 	}
 };
 
@@ -116,8 +129,8 @@ function evalTyped(expr, resolved, env){
 	switch(resolved.type){
 		case 'binary':
 			return resolved.fun(
-					evalExpr(expr.left),
-					evalExpr(expr.right));
+					evalExpr(expr.left, env),
+					evalExpr(expr.right, env));
 		default:
 			throw 'Unknown type of operation: ' + resolved.type;
 	}
@@ -130,7 +143,7 @@ var add_binding = function (env, v, val) {
 
 var lookup = function (env, v) { 
     if(!env || !env.bindings){
-        throw 'Couldnt find ' + v + '!';
+        throw 'Couldnt find ' + v + ' in env!';
     }
     
     if(env.bindings.hasOwnProperty(v)){
@@ -140,10 +153,26 @@ var lookup = function (env, v) {
     return lookup(env.outer, v);
 };
 
+var update = function (env, v, val) {
+	if(!env || !env.bindings){
+		throw 'update couldnt find ' + v + ' in env!';
+	}
+
+	if(env.bindings.hasOwnProperty(v)){
+		env.bindings[v] = val;
+		return;
+	}
+
+	update(env.outer, v, val);
+};
 
 function evalExpr(expr, env){
 	if(typeof expr === 'number'){
 		return expr;
+	}
+
+	if(typeof expr === 'string'){
+		return lookup(env, expr);
 	}
 	
 	var typed = operations[expr.tag];
@@ -193,10 +222,10 @@ var evalStatement = function (stmt, env) {
 				return val;
         case 'repeat':
 				// repeat( Expr ) { Body ... }
-            var times = evalExpr(stmt.expr);
+            var times = evalExpr(stmt.expr, env);
             var val = null;
             while(times--){
-                val = evalStatements(stmt.body);
+                val = evalStatements(stmt.body, env);
             }
             return val;
         case 'define':
