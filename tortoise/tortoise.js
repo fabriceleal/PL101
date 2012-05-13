@@ -65,7 +65,7 @@ Turtle.prototype.setOpacity = function(opacity) {
 Turtle.prototype.setWidth = function(width) {
     this.width = width;
 };
-Turtle.prototype.setColor = function(r, g, b) {
+Turtle.prototype.setColorRgb = function(r, g, b) {
     this.color = Raphael.rgb(r, g, b);
 };
 Turtle.prototype.setPosition = function(x, y) {
@@ -126,7 +126,8 @@ Turtle.prototype.assignEnv = function(env){
 	add_binding(env, 'left', function(a) { turtle.left(a); });
 	add_binding(env, 'setOpacity', function(d) { turtle.setOpacity(d); });
 	add_binding(env, 'setWidth', function(w) { turtle.setWidth(w); });
-	add_binding(env, 'setColor', function(r, g, b) { turtle.setColor(r, g, b); });
+	add_binding(env, 'setColorRgb', function(r, g, b) { turtle.setColorRgb(r, g, b); });
+	add_binding(env, 'setColor', function(c) { turtle.color = c; });
 	add_binding(env, 'setPosition', function(x, y) { turtle.setPosition(x, y); });
 	add_binding(env, 'setHeading', function(a) { turtle.setHeading(a); });
 	add_binding(env, 'home', function() { turtle.home(); });
