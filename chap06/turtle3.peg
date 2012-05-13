@@ -1,0 +1,24 @@
+start = statement
+
+expression = "EXPR"
+
+identifier
+    = chars:[a-z]+
+        { return chars.join(''); }
+
+statements = statement*
+
+statement
+    = vardecl / ifdecl / repeatdecl / assignment / identifier
+                
+assignment = v:identifier ":=" expr:expression ";"
+        { return { tag:":=", left:v, right:expr }; }
+                
+vardecl = "var " v:identifier ";"
+        { return { tag: "var", name:v };}
+       
+ifdecl = "if(" expr:expression "){" body:statements "}"
+        { return { tag:"if", "expr":expr, "body":body}; }
+
+repeatdecl = "repeat(" expr:expression "){" body:statements "}"
+        { return { tag:"repeat", expr:expr, body:body}; }
