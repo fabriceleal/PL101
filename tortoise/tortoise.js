@@ -10,35 +10,31 @@ var GraphicEnv = function(id, onCreated){
 	this.addTurtle(new Turtle(
 			'default', 
 			'#00f', 
-			{ x: $elem.width() / 2, y: $elem.height() / 2})).init().assignEnv();
+			{ x: $elem.width() / 2, y: $elem.height() / 2} )).init().assignEnv(env);
 };
 
 GraphicEnv.prototype.clear = function(){
 	this.paper.clear();
+	for (var key in this.turtles){
+		this.turtles[key].init();
+	}
 };
 
 GraphicEnv.prototype.addTurtle = function(turtle){
+	turtle.paper = this.paper;
 	this.turtles[turtle.name] = turtle;
-	this.turtles[turtle.name].paper = this.paper;
 	return turtle;
-}
+};
 
+// TURTLE
 
 var Turtle = function(name, color, location){
 	this.name = name;
 	this.originx = location.x;
 	this.originy = location.y;
 	this.color = color;
+	this.paper = undefined;
 };
-
-/*
-var Turtle = function (id) {
-    var $elem = $('#' + id);
-    this.paper = Raphael(id);
-    this.originx = $elem.width() / 2;
-    this.originy = $elem.height() / 2;
-    this.init();
-};*/
 
 Turtle.prototype.init = function () {
 	this.x = this.originx;
@@ -53,17 +49,22 @@ Turtle.prototype.init = function () {
 
 	return this;
 };
+
 Turtle.prototype.updateTurtle = function () {
-    if(this.turtleimg === undefined) {
-        this.turtleimg = this.paper.image(
-            "livetest_files/turtle2.png",
-            0, 0, 64, 64);
-    }
-    this.turtleimg.attr({
-        x: this.x - 32,
-        y: this.y - 32,
-        transform: "r" + (-this.angle)});
-    this.turtleimg.toFront();
+	if(this.turtleimg === undefined) {
+		this.turtleimg = this.paper.image(
+				"livetest_files/turtle2.png",
+				0, 0, 64, 64);
+	}
+	this.turtleimg.attr({
+			x: this.x - 32,
+			y: this.y - 32,
+			transform: "r" + (-this.angle)});
+	// ---
+
+	this.turtleimg.toFront();
+
+	return this;
 };
 Turtle.prototype.setOpacity = function(opacity) {
     this.opacity = opacity;
@@ -95,6 +96,8 @@ Turtle.prototype.drawTo = function (x, y) {
     };
     var path = this.paper.path(Raphael.format("M{0},{1}L{2},{3}",
         x1, y1, x, y)).attr(params);
+
+	return this;
 };
 Turtle.prototype.forward = function (d) {
     var newx = this.x + Math.cos(Raphael.rad(this.angle)) * d;
