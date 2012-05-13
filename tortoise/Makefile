@@ -15,5 +15,5 @@ clean:
 deploy:
 	cp parser.js $(PROJECT_HOME)
 	cp tortoise.js $(PROJECT_HOME)
-	cp tests/*.tests.json $(PROJECT_HOME)
+	cp tests/* $(PROJECT_HOME)
 
