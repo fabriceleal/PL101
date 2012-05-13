@@ -14,6 +14,7 @@ statement =
 	 stat_var
     / stat_if
     / stat_define
+    / stat_repeat
     / stat_assign
 	 / stat_expression
 
@@ -23,7 +24,7 @@ stat_expression = expr:expression ws ";" ws
 stat_define = 
       "define " ws v:identifier ws "(" ws ")" ws "{" ws body:statements ws "}" ws
         { return { tag:"define", name:v, args:[], body:body }; }
-    / "define " ws v:identifier ws "(" ws args:arglist ws ")" ws "{" ws body:statements ws "}" ws
+    / "define " ws v:identifier ws "(" ws args:idlist ws ")" ws "{" ws body:statements ws "}" ws
         { return { tag:"define", name:v, args:args, body:body }; }
 
 stat_assign = v:identifier ws ":=" ws expr:expression ws ";" ws
@@ -85,6 +86,7 @@ primary
         { return {tag:"call", name:v, args:args}; }
     / "(" ws expr:expression ws ")"
         { return expr; }
+    / identifier
 
 
 var_ref = id:identifier
@@ -111,5 +113,11 @@ comma_expression = "," ws expr:expression
 
 arglist
     = first:expression rest:comma_expression*
+        { return [first].concat(rest); }
+
+comma_identifier = "," ws expr:identifier
+        {return expr;}
+
+idlist = first:identifier rest:comma_identifier*
         { return [first].concat(rest); }
 
