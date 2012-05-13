@@ -129,8 +129,8 @@ function evalTyped(expr, resolved, env){
 	switch(resolved.type){
 		case 'binary':
 			return resolved.fun(
-					evalExpr(expr.left),
-					evalExpr(expr.right));
+					evalExpr(expr.left, env),
+					evalExpr(expr.right, env));
 		default:
 			throw 'Unknown type of operation: ' + resolved.type;
 	}
@@ -153,10 +153,26 @@ var lookup = function (env, v) {
     return lookup(env.outer, v);
 };
 
+var update = function (env, v, val) {
+	if(!env || !env.bindings){
+		throw 'update couldnt find ' + v + ' in env!';
+	}
+
+	if(env.bindings.hasOwnProperty(v)){
+		env.bindings[v] = val;
+		return;
+	}
+
+	update(env.outer, v, val);
+};
 
 function evalExpr(expr, env){
 	if(typeof expr === 'number'){
 		return expr;
+	}
+
+	if(typeof expr === 'string'){
+		return lookup(env, expr);
 	}
 	
 	var typed = operations[expr.tag];
