@@ -1,5 +1,5 @@
 
-PROJECT_HOME=~/projects/PL101_Pages
+PROJECT_HOME=~/projects/PL101_Pages/scheem
 
 final: parser.js
 
