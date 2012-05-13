@@ -1,0 +1,6 @@
+var a;
+repeat(50){
+        a := randomInterval(-180, 180);
+        right(a);
+        forward(10);
+}
