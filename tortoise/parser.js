@@ -86,13 +86,34 @@ function (input, startRule) {
       }
       
       function parse_statements() {
-        var result0, result1;
+        var result0, result1, result2;
+        var pos0, pos1;
         
-        result0 = [];
-        result1 = parse_statement();
-        while (result1 !== null) {
-          result0.push(result1);
-          result1 = parse_statement();
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_ws();
+        if (result0 !== null) {
+          result1 = [];
+          result2 = parse_statement();
+          while (result2 !== null) {
+            result1.push(result2);
+            result2 = parse_statement();
+          }
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, stuff) { return stuff; })(pos0, result0[1]);
+        }
+        if (result0 === null) {
+          pos = pos0;
         }
         return result0;
       }
