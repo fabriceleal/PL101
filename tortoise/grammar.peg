@@ -1,7 +1,8 @@
 start = statements
 
 statements
-    = statement*
+    = ws stuff:statement*
+    { return stuff; }
 
 // EXPRESSION
 
