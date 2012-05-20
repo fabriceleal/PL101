@@ -25,57 +25,6 @@ var isNumber = function(arg){
 	return typeof arg === 'number';
 };
 
-var deepEqual = function(a, b){
-	if(typeof a !== typeof b)
-		return false;
-
-	if(typeof a === 'object'){		
-		if(a.constructor == Array){
-			// Array
-			if(a.length != b.length)
-				return false;
-
-			for(var i in a){
-				if(!deepEqual(a[i], b[i])){
-					return false;		
-				}
-			}
-			
-			return true;
-		}else{
-			// Dictionary
-			// 1) Get array of keys for each dictionary
-			var keys_a = [], keys_b = [];
-
-			for(var ka in a){ keys_a.push(ka); }
-			for(var kb in b){ keys_b.push(kb); }
-
-			if(keys_a.length != keys_b.length){
-				return false;
-			}
-			
-			// 2) Compare the sorted keys, to check if both dictionaries have the same keys
-			keys_a = keys_a.sort(function(a, b){ return a > b;});
-			keys_b = keys_b.sort(function(a, b){ return a > b;});
-			
-			if(! deepEqual(keys_a, keys_b)){
-				return false;
-			}
-
-			// 3) Compare values through  the dictionary
-			for(var i in keys_a){
-				if(! deepEqual(keys_a[i], keys_b[i])){
-					return false;
-				}
-			}
-			
-			// 4) If you reach this point, you have deepEqual !
-			return true;
-		}
-	}
-	
-	return a === b;	
-};
 
 var nbrReduction = function(name, args, mathFun){
 	//console.log('nbrReduction');
@@ -298,14 +247,6 @@ var evalScheem = function (expr, env) {
 	if(env == null){
 		throw 'env is null!';
 	}
-
-	// For now, this will be needed ...
-	/*if(deepEqual(env, {bindings:{}, outer:{}})){
-		env = {
-			bidings: initial_env,
-			outer: env
-		};
-	}*/
 
 	// Numbers evaluate to themselves
 	if (typeof expr === 'number') {
