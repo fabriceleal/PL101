@@ -23,7 +23,7 @@ var simpleFunCombinator = function(v){
 		if(res == undefined)
 			res = 0;
 		
-		return thunkValue(res);
+		return cont(res);
 	}
 }
 
@@ -305,7 +305,10 @@ function evalExpr(expr, env, cont, xcont){
 				mylog("DBG " + expr.name + " = " + func.toString());
 				mylog(ev_args);
 				//return func.apply(null, ev_args);
+
 				return thunk(func, ev_args, env, cont, xcont);
+
+				
 		case 'ident':
 				// return lookup(env, expr.name);
 	        	return evalExpr(expr.name, env, cont, xcont); 
@@ -575,13 +578,13 @@ var trace = function(funname){
 }
 
 var mylog = function(stuff){
-	console.log(stuff);
+	//console.log(stuff);
 }
 
-/**/
+/*
 trace("stepStart");
 trace("evalExpr");
 trace("evalStatement");
 trace("evalFull");
 trace("evalFullStatements");
-trace("step");
+trace("step");*/
