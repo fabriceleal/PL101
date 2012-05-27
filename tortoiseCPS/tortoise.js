@@ -486,8 +486,7 @@ var stepStart = function (expr, env, cont, xcont) {
 	var ret = { 
 		data: evalStatement(expr, env, cont, xcont),
 		done: false
-	};
-	ret.new_env = env;
+	};	
 	return ret;
 };
 
