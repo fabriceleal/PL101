@@ -1,0 +1,92 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tortoise Live Demo</title>
+  <script src="livetest_files/raphael-min.js">
+  </script>
+  <script src="tortoise.js"></script>
+  <script src="livetest_files/get_data.js"></script>
+  <script src="livetest_files/jquery-1.7.min.js">
+  </script>
+</head>
+<body>
+
+<div id="tests"></div>
+
+<textarea id="input" style="width:700px; height:200px;">
+forward(100);
+</textarea>
+
+<input id="submitbutton" type="button" value="Run" />
+
+<div id="console" style="width:700px; height:100px; border: solid 1px;"></div>
+
+<div id="turtlecanvas" style="width:700px; height:600px; background-color: #eee;"></div>
+<script>
+	var TORTOISE = {};
+	// Download and compile parser
+	getData("parser.js", function(compiled){
+		TORTOISE.parse = compiled;
+	});
+
+</script>
+<script>
+		// After page load
+		$(function() {
+			
+			// Load tests
+			getData("index.json", function(compiled){
+				var stuff = [];
+				
+				compiled.forEach(function(item, idx){
+					// Download test
+					getDataRaw(item.file, function(raw){
+						stuff[idx] = raw;
+					});
+					
+					var a = document.createElement('a');
+					a.href = "#";
+					a.onclick = function(){
+						$('#input').val(stuff[idx]);
+					};
+					a.innerHTML = item.title;
+					$('#tests')[0].appendChild(a);
+					$('#tests')[0].appendChild(document.createElement('br'));
+					console.log(item.title);
+				});
+			});
+
+			// Utility function to log messages
+			var log_console = function(msg) {
+				$('#console').append('<p>' + msg + '</p>');
+			};
+
+			//var myTurtle = new Turtle("turtlecanvas");
+			//myTurtle.assignEnv(env);
+
+			graphicsEnv = new GraphicEnv("turtlecanvas");
+
+			$('#submitbutton').click(function() {
+				var user_text = $('#input').val();
+				$('#console').html('');
+				graphicsEnv.clear();
+
+				try {
+					var parsed = TORTOISE.parse(user_text);
+					try {
+						var result = evalFullStatements(parsed, env);					
+						log_console('Success!');
+					}
+					catch(e) {
+						log_console('Eval Error: ' + e);
+					}
+				}
+				catch(e) {
+					log_console('Parse Error: ' + e);
+				}
+			});
+		});
+</script>
+
+</body>
+</html>
