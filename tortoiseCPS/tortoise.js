@@ -329,8 +329,6 @@ var evalStatement = function (stmt, env, cont, xcont) {
             return thunk(evalExpr, stmt.body, env, cont, xcont);
         case 'var':
             // Var Name;
-            //add_binding(env, stmt.name, 0);
-            //return 0;
 				return thunk(
 						function(env, v, val){
 							// A wrapper fot the add_binding function, which returns the new env. Not necessary :|
@@ -340,9 +338,6 @@ var evalStatement = function (stmt, env, cont, xcont) {
 						}, env, stmt.name, 0);
         case ':=':
             // Left := Right
-				//val = evalExpr(stmt.right, env);
-				//update(env, stmt.left, val);
-				//return val;
 				mylog("Returning thunk for update...");
 				return thunk(evalExpr, stmt.right, env, 
 						function(right){
@@ -354,10 +349,6 @@ var evalStatement = function (stmt, env, cont, xcont) {
 						}, xcont);
         case 'if':
 				// if( Expr ) { Body ... }
-				//if(evalExpr(stmt.expr, env)) {
-            //	val = evalStatements(stmt.body, env);
-				//}
-				//return val;
 				return thunk(evalExpr, stmt.expr, env, 
 						function(cond){
 							if(cond){
@@ -367,13 +358,6 @@ var evalStatement = function (stmt, env, cont, xcont) {
 						}, xcont);
         case 'repeat':
 				// repeat( Expr ) { Body ... }
-            /*var times = evalExpr(stmt.expr, env);
-            var val = null;
-            while(times--){
-                val = evalStatements(stmt.body, env);
-            }
-            return val;*/
-
 				return thunk(evalExpr, stmt.expr, env, 
 						function(times){
 							mylog("Entered repeat (" + times + ")");
@@ -385,38 +369,27 @@ var evalStatement = function (stmt, env, cont, xcont) {
 							return thunk(cont, val);
 						}, xcont);
         case 'with':
-				/*
-				var turtle = lookup(env, stmt.expr);
-				if (turtle.constructor !== Turtle)
-					throw 'No such turtle ' + stmt.expr;
-			
-				var new_bindings = {};
-				var new_env = { bindings: new_bindings, outer: env};
+				// with(Expr){ Body ...}
+				return thunk(evalExpr, stmt.expr, env, 
+						function(turtle){
+							if (turtle.constructor !== Turtle)
+								throw 'No such turtle ' + stmt.expr;
 
-				turtle.assignEnv(new_env);
+							var new_bindings = {};
+							var new_env = { bindings: new_bindings, outer: env};
 
-				return evalStatements(stmt.body, new_env);	*/		
+							turtle.assignEnv(new_env);
+
+							return thunk(cont, evalFullStatements(stmt.body, new_env));
+
+						}, cont, xcont);
         case 'define':
-		     /*var new_func = function() {		         
-		         var i;
-		         var new_env;
-		         var new_bindings;
-		         new_bindings = { };
-		         for(i = 0; i < stmt.args.length; i++) {
-		             new_bindings[stmt.args[i]] = arguments[i];
-		         }
-		         new_env = { bindings: new_bindings, outer: env };
-		         return evalStatements(stmt.body, new_env);
-		     };
-		     add_binding(env, stmt.name, new_func);
-		     return 0;*/
 				return thunk(
 						function(){
 							var new_func = function(args, env, cont, xcont) {		         
-								var i;
-								var new_env;
-								var new_bindings;
+								var i, new_env, new_bindings;
 								new_bindings = { };
+
 								for(i = 0; i < stmt.args.length; i++) {
 									 new_bindings[stmt.args[i]] = trampoline(args[i]);
 								}
@@ -424,28 +397,24 @@ var evalStatement = function (stmt, env, cont, xcont) {
 								// Add to future env
 								new_env = { bindings: new_bindings, outer: env };
 
-								return cont( evalFullStatements(stmt.body, new_env) );
+								return thunk(cont, evalFullStatements(stmt.body, new_env) );
 							};
 							// Add to current env
 							add_binding(env, stmt.name, new_func);
 
-							return thunkValue(0);
+							return thunk(cont, 0);
 						});
         case 'turtle':
-  				/*
+  				
 				var ev_args = stmt.args;
-
 				ev_args.push(env);
 				ev_args.push(graphicsEnv);
-				createTurtle.apply(null, ev_args);
-
-				return 0;
-				*/
+				
 				return thunk(
-						function(e, g){
-							createTurtle(e, g);
-							return thunkValue(0);
-						}, env, graphicsEnv);
+						function(){
+							createTurtle.apply(null, ev_args);
+							return thunk(cont, 0);
+						});
     }
 
 	if(stmt.tag == undefined)
