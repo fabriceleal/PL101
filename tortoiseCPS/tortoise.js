@@ -121,16 +121,16 @@ Turtle.prototype.home = function() {
 };
 Turtle.prototype.assignEnv = function(env){
 	var turtle = this;
-	add_binding(env, 'forward', function(d) { turtle.forward(d); });
-	add_binding(env, 'right', function(a) { turtle.right(a); });
-	add_binding(env, 'left', function(a) { turtle.left(a); });
-	add_binding(env, 'setOpacity', function(d) { turtle.setOpacity(d); });
-	add_binding(env, 'setWidth', function(w) { turtle.setWidth(w); });
-	add_binding(env, 'setColorRgb', function(r, g, b) { turtle.setColorRgb(r, g, b); });
-	add_binding(env, 'setColor', function(c) { turtle.color = c; });
-	add_binding(env, 'setPosition', function(x, y) { turtle.setPosition(x, y); });
-	add_binding(env, 'setHeading', function(a) { turtle.setHeading(a); });
-	add_binding(env, 'home', function() { turtle.home(); });
+	add_binding(env, 'forward', function(d) { console.log("forward executed!"); turtle.forward(d); return thunkValue(0); });
+	add_binding(env, 'right', function(a) { turtle.right(a); return thunkValue(0); });
+	add_binding(env, 'left', function(a) { turtle.left(a); return thunkValue(0); });
+	add_binding(env, 'setOpacity', function(d) { turtle.setOpacity(d); return thunkValue(0); });
+	add_binding(env, 'setWidth', function(w) { turtle.setWidth(w); return thunkValue(0); });
+	add_binding(env, 'setColorRgb', function(r, g, b) { turtle.setColorRgb(r, g, b); return thunkValue(0); });
+	add_binding(env, 'setColor', function(c) { turtle.color = c; return thunkValue(0); });
+	add_binding(env, 'setPosition', function(x, y) { turtle.setPosition(x, y); return thunkValue(0); });
+	add_binding(env, 'setHeading', function(a) { turtle.setHeading(a); return thunkValue(0); });
+	add_binding(env, 'home', function() { turtle.home(); return thunkValue(0); });
 }
 
 // Predifined operations
@@ -211,6 +211,7 @@ var initial_functions = {
 
 var env = { bindings: initial_functions };
 
+// TODO
 var createTurtle = function(name, color, originx, originy, env, grapEnv){
 	var newTurtle = new Turtle(name, color, { x: originx, y : originy });
 
@@ -223,80 +224,109 @@ var createTurtle = function(name, color, originx, originy, env, grapEnv){
 	return newTurtle;
 };
 
-function evalTyped(expr, resolved, env){
+
+// Thunked
+function evalTyped(expr, resolved, env, cont, xcont){
 	switch(resolved.type){
 		case 'binary':
-			return resolved.fun(
-					evalExpr(expr.left, env),
-					evalExpr(expr.right, env));
+			return thunk(evalExpr, expr.left, env, 
+					function(a1){
+						return thunk(evalExpr, expr.right, env, 
+							function(a2){
+								return thunk(cont, resolved.fun(a1, a2));
+							}
+						, xcont)
+					}
+					, xcont);
 		default:
 			throw 'Unknown type of operation: ' + resolved.type;
 	}
 }
 
-function evalExpr(expr, env){
+
+// Thunked
+function evalExpr(expr, env, cont, xcont){
 	if(typeof expr === 'number'){
-		return expr;
+		return thunk(cont, expr);
 	}
 
 	if(typeof expr === 'string'){
-		return lookup(env, expr);
+		return thunk(cont, lookup(env, expr));
 	}
 	
 	var typed = operations[expr.tag];
 	if(typed){
-		return evalTyped(expr, typed, env);
+		return evalTyped(expr, typed, env, cont, xcont);
 	}
 
 	switch(expr.tag){
 		case 'call':
-		        // Get function value
-		        var func = lookup(env, expr.name);
-		        // Evaluate arguments to pass
-		        var ev_args = [];
-		        var i = 0;
-		        for(i = 0; i < expr.args.length; i++) {
-		            ev_args[i] = evalExpr(expr.args[i], env);
-		        }
-		        return func.apply(null, ev_args);
+				// Get function value
+				var func = lookup(env, expr.name);
+				// Evaluate arguments to pass
+				var ev_args = [];
+				var i = 0;
+				for(i = 0; i < expr.args.length; i++) {
+					ev_args[i] = evalExpr(expr.args[i], env);
+				}
+				//return func.apply(null, ev_args);
+				return thunk(func, ev_args, env, cont, xcont);
 		case 'ident':
-	        	return lookup(env, expr.name);			
+				// return lookup(env, expr.name);
+	        	return evalExpr(expr.name); 
 	}
 
 	throw 'Unexpected expression (' + expr.tag + ')';
 }
 
 
-var evalStatement = function (stmt, env) {
+
+// This is the main entry point, not evalExpr !!!!
+// TODO ALMOST Thunked
+var evalStatement = function (stmt, env, cont, xcont) {
     var val = undefined;
     switch(stmt.tag) {
         case 'ignore':
             // f(1+1);, 1+1; ,.... 
-            return evalExpr(stmt.body, env);
+            return thunk(evalExpr, stmt.body, env, cont, xcont);
         case 'var':
             // Var Name;
-            add_binding(env, stmt.name, 0);
-            return 0;
+            //add_binding(env, stmt.name, 0);
+            //return 0;
+				return thunk(add_binding, env, stmt.name, 0);
         case ':=':
             // Left := Right
-				val = evalExpr(stmt.right, env);
-				update(env, stmt.left, val);
-				return val;
+				//val = evalExpr(stmt.right, env);
+				//update(env, stmt.left, val);
+				//return val;
+				return thunk(evalExpr, stmt.rigth, env, 
+						function(right){
+							update(env, stmt.left, val);
+							return thunk(cont, right);
+						}, xcont);
         case 'if':
 				// if( Expr ) { Body ... }
-				if(evalExpr(stmt.expr, env)) {
-            	val = evalStatements(stmt.body, env);
-				}
-				return val;
+				//if(evalExpr(stmt.expr, env)) {
+            //	val = evalStatements(stmt.body, env);
+				//}
+				//return val;
+				return thunk(evalExpr, stmt.expr, env, 
+						function(cond){
+							if(cond){
+								val = evalStatements(stmt.body, env);
+							}
+							return thunk(cont, val);
+						}, xcont);
         case 'repeat':
 				// repeat( Expr ) { Body ... }
-            var times = evalExpr(stmt.expr, env);
+            /*var times = evalExpr(stmt.expr, env);
             var val = null;
             while(times--){
                 val = evalStatements(stmt.body, env);
             }
-            return val;
+            return val;*/
         case 'with':
+				/*
 				var turtle = lookup(env, stmt.expr);
 				if (turtle.constructor !== Turtle)
 					throw 'No such turtle ' + stmt.expr;
@@ -306,9 +336,9 @@ var evalStatement = function (stmt, env) {
 
 				turtle.assignEnv(new_env);
 
-				return evalStatements(stmt.body, new_env);			
+				return evalStatements(stmt.body, new_env);	*/		
         case 'define':
-		     var new_func = function() {		         
+		     /*var new_func = function() {		         
 		         var i;
 		         var new_env;
 		         var new_bindings;
@@ -320,26 +350,166 @@ var evalStatement = function (stmt, env) {
 		         return evalStatements(stmt.body, new_env);
 		     };
 		     add_binding(env, stmt.name, new_func);
-		     return 0;
+		     return 0;*/
         case 'turtle':
-				// FIXME For now, passed as is
+  				/*
 				var ev_args = stmt.args;
 
 				ev_args.push(env);
 				ev_args.push(graphicsEnv);
 				createTurtle.apply(null, ev_args);
 
-				return 0;
+				return 0;*/
     }
+
+	if(typeof stmt.tag === undefined)
+		throw 'without tag in ' + JSON.stringify(stmt)
+	else
+		throw 'tag ' + stmt.tag + ' is not implemented!';
 };
 
 
-var evalStatements = function (seq, env) {
+var evalStatements = function (seq, env, cont, xcont) {
     var i;
     var val = undefined;
     for(i = 0; i < seq.length; i++) {
-        val = evalStatement(seq[i], env);
+        val = evalStatement(seq[i], env, cont, xcont);
     }
     return val;
 };
 
+// CPS -------------
+
+/*
+ Create a thunk for a function and its arguments
+*/
+var thunk = function (f) {
+    var args = Array.prototype.slice.call(arguments);
+    args.shift();
+    return { tag: "thunk", func: f, args: args };
+};
+
+/*
+ Create a thunk for a value
+*/
+var thunkValue = function (x) {
+    return { tag: "value", val: x };
+};
+
+/*
+ Trampoline for evaluation of a thunk
+*/
+var trampoline = function (thk) {
+	if(typeof thk === undefined)
+		throw 'thk undefined at trampoline()';
+
+	while (true) {
+		if (thk.tag === "value") {
+			return thk.val;
+		} else if (thk.tag === "thunk") {
+			thk = thk.func.apply(null, thk.args);
+		} else {
+			throw new Error("Bad thunk");
+		}
+	}
+};
+
+/*
+ Setup an aux structure for step-by-step evaluation
+*/
+var stepStart = function (expr, env, cont, xcont) {
+    return { 
+        data: evalStatement(expr, env, cont, xcont),
+        done: false
+    };
+};
+
+/*
+  Wrapper for evaluating an expression, step by step
+*/
+var evalFull = function (expr, env) {
+    var state = stepStart(expr, env, thunkValue, thunkValue);
+    while(!state.done) {
+        step(state);
+    }
+    return state.data;
+};
+
+
+var evalFullStatements = function(stats, env){
+    var i;
+    var val = undefined;
+    for(i = 0; i < stats.length; i++) {
+        val = evalFull(stats[i], env);
+    }
+    return val;
+}
+
+/*
+ Wrapper for evaluating two parallel expressions
+*/
+var evalTwo = function (expr0, expr1, env) {
+    var state0 = stepStart(expr0, env);
+    var state1 = stepStart(expr1, env);
+        
+    while(true) {
+        if(!state0.done)
+            step(state0);
+        if(!state1.done)
+            step(state1);
+        if(state0.done && state1.done)
+            return;
+    }
+};
+
+var step = function(state){
+
+	var thk = state.data;
+	if(typeof thk === undefined)
+		throw 'thk undefined at step(...)';
+
+	if (thk.tag === "value") {        
+		state.data = thk.val;
+		state.done = true;
+
+		return state;
+	} else if (thk.tag === "thunk") {
+		state.data = thk.func.apply(null, thk.args);
+		state.done = false;
+
+		return state;
+	} else {
+		throw new Error("Bad thunk");
+	}
+
+}
+
+
+var i = 0;
+var traced = {};
+var trace = function(funname){
+	var tmp = eval(funname);
+
+	traced[funname] = tmp;
+
+	eval("(" + funname + " = " + 
+				function(){
+						var args = Array.prototype.slice.call(arguments);
+						i+=1;
+						console.log("TRACE[" + i + "]: enter " + funname + " (")
+						console.log(args);
+						console.log(")")
+						var res = tmp.apply(null, args);						
+						console.log("TRACE[" + i + "]: exit  " + funname + " = ");
+						console.log(res);
+						i-=1;
+						return res;
+					} + ")");
+}
+
+trace("stepStart");
+trace("evalExpr");
+trace("evalStatement");
+trace("evalFull");
+trace("evalFullStatements");
+trace("step");
