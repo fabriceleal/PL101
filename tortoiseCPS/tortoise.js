@@ -410,6 +410,27 @@ var evalStatement = function (stmt, env, cont, xcont) {
 		     };
 		     add_binding(env, stmt.name, new_func);
 		     return 0;*/
+				return thunk(
+						function(){
+							var new_func = function(args, env, cont, xcont) {		         
+								var i;
+								var new_env;
+								var new_bindings;
+								new_bindings = { };
+								for(i = 0; i < stmt.args.length; i++) {
+									 new_bindings[stmt.args[i]] = trampoline(args[i]);
+								}
+
+								// Add to future env
+								new_env = { bindings: new_bindings, outer: env };
+
+								return cont( evalFullStatements(stmt.body, new_env) );
+							};
+							// Add to current env
+							add_binding(env, stmt.name, new_func);
+
+							return thunkValue(0);
+						});
         case 'turtle':
   				/*
 				var ev_args = stmt.args;
@@ -418,7 +439,13 @@ var evalStatement = function (stmt, env, cont, xcont) {
 				ev_args.push(graphicsEnv);
 				createTurtle.apply(null, ev_args);
 
-				return 0;*/
+				return 0;
+				*/
+				return thunk(
+						function(e, g){
+							createTurtle(e, g);
+							return thunkValue(0);
+						}, env, graphicsEnv);
     }
 
 	if(stmt.tag == undefined)
