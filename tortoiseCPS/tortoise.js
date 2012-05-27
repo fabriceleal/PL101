@@ -1,3 +1,24 @@
+
+/*
+"Rewrites" "normal" functions to accept thunked args and return thunked values
+This wont work for recursive functions. If needed, use the Y-combinator
+*/
+var simpleFunCombinator = function(v){
+	return function(){
+		var args = Array.prototype.slice.call(arguments); 
+		mylog("ENTER IN COMBINATED");
+		mylog(args);
+		args = args[0]; // The rest is the env, cont and xcont
+		mylog(args);
+		var res = v.apply(null, args.map(function(n){ mylog("TO PARSE:"); mylog(n); return trampoline(n); }));
+		
+		if(res == undefined)
+			res = 0;
+		
+		return thunkValue(res);
+	}
+}
+
 // GRAPHIC ENV
 
 var GraphicEnv = function(id, onCreated){
@@ -134,26 +155,6 @@ Turtle.prototype.assignEnv = function(env){
 	add_binding(env, 'home', simpleFunCombinator(function() { turtle.home(); }) );
 }
 
-/*
-"Rewrites" "normal" functions to accept thunked args and return thunked values
-This wont work for recursive functions. If needed, use the Y-combinator
-*/
-var simpleFunCombinator = function(v){
-	return function(){
-		var args = Array.prototype.slice.call(arguments); 
-		mylog("ENTER IN COMBINATED");
-		mylog(args);
-		args = args[0]; // The rest is the env, cont and xcont
-		mylog(args);
-		var res = v.apply(null, args.map(function(n){ mylog("TO PARSE:"); mylog(n); return trampoline(n); }));
-		
-		if(res == undefined)
-			res = 0;
-		
-		return thunkValue(res);
-	}
-}
-
 // Predifined operations
 
 var operations = {
@@ -226,8 +227,8 @@ var graphicsEnv = undefined;
 
 // TORTOISE EVALUATION
 var initial_functions = {
-	'random' : function(){ return Math.random(); },
-	'randomInterval' : function(min, max){ return Math.random() * (max - min) + min; }
+	'random' : simpleFunCombinator(function(){ return Math.random(); }),
+	'randomInterval' : simpleFunCombinator(function(min, max){ return Math.random() * (max - min) + min; })
 };
 
 var env = { bindings: initial_functions };
