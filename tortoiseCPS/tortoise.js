@@ -49,6 +49,10 @@ Turtle.prototype.updateTurtle = function () {
 				"livetest_files/turtle2.png",
 				0, 0, 64, 64);
 	}
+
+	if(typeof this.x === undefined || typeof this.y === undefined || typeof this.angle === undefined )
+		throw new Error("there is stuff that is undefined!");
+
 	this.turtleimg.attr({
 			x: this.x - 32,
 			y: this.y - 32,
@@ -93,6 +97,9 @@ Turtle.prototype.drawTo = function (x, y) {
 	return this;
 };
 Turtle.prototype.forward = function (d) {
+	if(typeof this.x === undefined || typeof this.y === undefined || typeof this.angle === undefined )
+		throw new Error("there is stuff that is undefined!");
+
     var newx = this.x + Math.cos(Raphael.rad(this.angle)) * d;
     var newy = this.y - Math.sin(Raphael.rad(this.angle)) * d;
     if(this.pen) {
@@ -121,16 +128,31 @@ Turtle.prototype.home = function() {
 };
 Turtle.prototype.assignEnv = function(env){
 	var turtle = this;
-	add_binding(env, 'forward', function(d) { console.log("forward executed!"); turtle.forward(d); return thunkValue(0); });
-	add_binding(env, 'right', function(a) { turtle.right(a); return thunkValue(0); });
-	add_binding(env, 'left', function(a) { turtle.left(a); return thunkValue(0); });
-	add_binding(env, 'setOpacity', function(d) { turtle.setOpacity(d); return thunkValue(0); });
-	add_binding(env, 'setWidth', function(w) { turtle.setWidth(w); return thunkValue(0); });
-	add_binding(env, 'setColorRgb', function(r, g, b) { turtle.setColorRgb(r, g, b); return thunkValue(0); });
-	add_binding(env, 'setColor', function(c) { turtle.color = c; return thunkValue(0); });
-	add_binding(env, 'setPosition', function(x, y) { turtle.setPosition(x, y); return thunkValue(0); });
-	add_binding(env, 'setHeading', function(a) { turtle.setHeading(a); return thunkValue(0); });
-	add_binding(env, 'home', function() { turtle.home(); return thunkValue(0); });
+	add_binding(env, 'forward', simpleFunCombinator(function(d) { turtle.forward(trampoline(d));	}));
+	add_binding(env, 'right', simpleFunCombinator(function(a) { turtle.right(a);	}));
+	add_binding(env, 'left', simpleFunCombinator(function(a) { turtle.left(a); }) );
+	add_binding(env, 'setOpacity', simpleFunCombinator(function(d) { turtle.setOpacity(d); }) );
+	add_binding(env, 'setWidth', simpleFunCombinator(function(w) { turtle.setWidth(w); }) );
+	add_binding(env, 'setColorRgb', simpleFunCombinator(function(r, g, b) { turtle.setColorRgb(r, g, b); }) );
+	add_binding(env, 'setColor', simpleFunCombinator(function(c) { turtle.color = c; }) );
+	add_binding(env, 'setPosition', simpleFunCombinator(function(x, y) { turtle.setPosition(x, y); }) );
+	add_binding(env, 'setHeading', simpleFunCombinator(function(a) { turtle.setHeading(a); }) );
+	add_binding(env, 'home', simpleFunCombinator(function() { turtle.home(); }) );
+}
+
+/*
+"Rewrites" "normal" functions to accept thunked args and return thunked values
+This wont work for recursive functions. If needed, use the Y-combinator
+*/
+var simpleFunCombinator = function(v){
+	return function(){
+		var res = v.apply(null, Array.prototype.slice.call(arguments).map(function(n){return trampoline(n);});
+		
+		if(typeof res === undefined)
+			res = 0;
+		
+		return thunkValue(res);
+	}
 }
 
 // Predifined operations
@@ -267,13 +289,15 @@ function evalExpr(expr, env, cont, xcont){
 				var ev_args = [];
 				var i = 0;
 				for(i = 0; i < expr.args.length; i++) {
-					ev_args[i] = evalExpr(expr.args[i], env);
+					ev_args[i] = evalExpr(expr.args[i], env, cont, xcont);
 				}
+				console.log("DBG " + expr.name + " = " + func.toString());
+				console.log(ev_args);
 				//return func.apply(null, ev_args);
 				return thunk(func, ev_args, env, cont, xcont);
 		case 'ident':
 				// return lookup(env, expr.name);
-	        	return evalExpr(expr.name); 
+	        	return evalExpr(expr.name, env, cont, xcont); 
 	}
 
 	throw 'Unexpected expression (' + expr.tag + ')';
@@ -313,7 +337,7 @@ var evalStatement = function (stmt, env, cont, xcont) {
 				return thunk(evalExpr, stmt.expr, env, 
 						function(cond){
 							if(cond){
-								val = evalStatements(stmt.body, env);
+								val = evalStatements(stmt.body, env, cont, xcont);
 							}
 							return thunk(cont, val);
 						}, xcont);
@@ -325,6 +349,15 @@ var evalStatement = function (stmt, env, cont, xcont) {
                 val = evalStatements(stmt.body, env);
             }
             return val;*/
+
+				return thunk(evalExpr, stmt.expr, env, 
+						function(times){
+							var val = null;
+							while(times--){
+								val = evalStatements(stmt.body, env);
+							}
+							return thunk(cont, val);
+						}, xcont);
         case 'with':
 				/*
 				var turtle = lookup(env, stmt.expr);
@@ -384,9 +417,12 @@ var evalStatements = function (seq, env, cont, xcont) {
  Create a thunk for a function and its arguments
 */
 var thunk = function (f) {
-    var args = Array.prototype.slice.call(arguments);
-    args.shift();
-    return { tag: "thunk", func: f, args: args };
+	if(typeof f === undefined)
+		throw 'Please do not create a thunk without a function!!!';
+
+	var args = Array.prototype.slice.call(arguments);
+	args.shift();
+	return { tag: "thunk", func: f, args: args };
 };
 
 /*
@@ -400,15 +436,17 @@ var thunkValue = function (x) {
  Trampoline for evaluation of a thunk
 */
 var trampoline = function (thk) {
-	if(typeof thk === undefined)
-		throw 'thk undefined at trampoline()';
-
 	while (true) {
+		if(typeof thk === undefined)
+			throw 'thk undefined at trampoline()';
+
+
 		if (thk.tag === "value") {
 			return thk.val;
 		} else if (thk.tag === "thunk") {
 			thk = thk.func.apply(null, thk.args);
 		} else {
+			console.log(thk);
 			throw new Error("Bad thunk");
 		}
 	}
@@ -479,6 +517,8 @@ var step = function(state){
 
 		return state;
 	} else {
+		console.log(state);
+		console.log(thk);
 		throw new Error("Bad thunk");
 	}
 
@@ -506,7 +546,7 @@ var trace = function(funname){
 						return res;
 					} + ")");
 }
-
+/**/
 trace("stepStart");
 trace("evalExpr");
 trace("evalStatement");
