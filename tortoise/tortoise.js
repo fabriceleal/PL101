@@ -46,7 +46,7 @@ Turtle.prototype.init = function () {
 Turtle.prototype.updateTurtle = function () {
 	if(this.turtleimg === undefined) {
 		this.turtleimg = this.paper.image(
-				"livetest_files/turtle2.png",
+				"../general/turtle2.png",
 				0, 0, 64, 64);
 	}
 	this.turtleimg.attr({
