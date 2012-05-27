@@ -1,0 +1,20 @@
+turtle(leonardo, blue, 200, 200);
+turtle(raphael, red, 300, 200);
+turtle(michaelangelo, yellow, 400, 200);
+turtle(donatello, purple, 500, 200);
+
+with(leonardo){
+forward(75);
+}
+
+with(raphael){
+forward(75);
+}
+
+with(michaelangelo){
+forward(75);
+}
+
+with(donatello){
+forward(75);
+}
