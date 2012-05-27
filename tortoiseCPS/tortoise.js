@@ -44,14 +44,11 @@ Turtle.prototype.init = function () {
 };
 
 Turtle.prototype.updateTurtle = function () {
-	if(this.turtleimg === undefined) {
+	if(this.turtleimg == undefined) {
 		this.turtleimg = this.paper.image(
 				"livetest_files/turtle2.png",
 				0, 0, 64, 64);
 	}
-
-	if(typeof this.x === undefined || typeof this.y === undefined || typeof this.angle === undefined )
-		throw new Error("there is stuff that is undefined!");
 
 	this.turtleimg.attr({
 			x: this.x - 32,
@@ -97,9 +94,6 @@ Turtle.prototype.drawTo = function (x, y) {
 	return this;
 };
 Turtle.prototype.forward = function (d) {
-	if(typeof this.x === undefined || typeof this.y === undefined || typeof this.angle === undefined )
-		throw new Error("there is stuff that is undefined!");
-
     var newx = this.x + Math.cos(Raphael.rad(this.angle)) * d;
     var newy = this.y - Math.sin(Raphael.rad(this.angle)) * d;
     if(this.pen) {
@@ -128,7 +122,7 @@ Turtle.prototype.home = function() {
 };
 Turtle.prototype.assignEnv = function(env){
 	var turtle = this;
-	add_binding(env, 'forward', simpleFunCombinator(function(d) { turtle.forward(trampoline(d));	}));
+	add_binding(env, 'forward', simpleFunCombinator(function(d) { turtle.forward(d);	}));
 	add_binding(env, 'right', simpleFunCombinator(function(a) { turtle.right(a);	}));
 	add_binding(env, 'left', simpleFunCombinator(function(a) { turtle.left(a); }) );
 	add_binding(env, 'setOpacity', simpleFunCombinator(function(d) { turtle.setOpacity(d); }) );
@@ -146,9 +140,14 @@ This wont work for recursive functions. If needed, use the Y-combinator
 */
 var simpleFunCombinator = function(v){
 	return function(){
-		var res = v.apply(null, Array.prototype.slice.call(arguments).map(function(n){return trampoline(n);});
+		var args = Array.prototype.slice.call(arguments); 
+		mylog("ENTER IN COMBINATED");
+		mylog(args);
+		args = args[0]; // The rest is the env, cont and xcont
+		mylog(args);
+		var res = v.apply(null, args.map(function(n){ mylog("TO PARSE:"); mylog(n); return trampoline(n); }));
 		
-		if(typeof res === undefined)
+		if(res == undefined)
 			res = 0;
 		
 		return thunkValue(res);
@@ -209,7 +208,7 @@ var update = function (env, v, val) {
 	}
 
 	if(env.bindings.hasOwnProperty(v)){
-		if(typeof env.bindings[v] !== 'undefined' && typeof env.bindings[v] !== typeof val)
+		if(env.bindings[v] != undefined && typeof env.bindings[v] !== typeof val)
 			throw 'You cant store values in a slot that contains a value of another type! I wont let you!';
 
 		env.bindings[v] = val;
@@ -268,6 +267,9 @@ function evalTyped(expr, resolved, env, cont, xcont){
 
 // Thunked
 function evalExpr(expr, env, cont, xcont){
+	if(expr == undefined)
+		throw 'expr is undefined!';
+
 	if(typeof expr === 'number'){
 		return thunk(cont, expr);
 	}
@@ -291,8 +293,8 @@ function evalExpr(expr, env, cont, xcont){
 				for(i = 0; i < expr.args.length; i++) {
 					ev_args[i] = evalExpr(expr.args[i], env, cont, xcont);
 				}
-				console.log("DBG " + expr.name + " = " + func.toString());
-				console.log(ev_args);
+				mylog("DBG " + expr.name + " = " + func.toString());
+				mylog(ev_args);
 				//return func.apply(null, ev_args);
 				return thunk(func, ev_args, env, cont, xcont);
 		case 'ident':
@@ -317,16 +319,24 @@ var evalStatement = function (stmt, env, cont, xcont) {
             // Var Name;
             //add_binding(env, stmt.name, 0);
             //return 0;
-				return thunk(add_binding, env, stmt.name, 0);
+				return thunk(
+						function(env, v, val){
+							// A wrapper fot the add_binding function, which returns the new env. Not necessary :|
+							mylog("Running add_binding!");
+							add_binding(env, v, val); 
+							return thunk(cont, 0); 
+						}, env, stmt.name, 0);
         case ':=':
             // Left := Right
 				//val = evalExpr(stmt.right, env);
 				//update(env, stmt.left, val);
 				//return val;
-				return thunk(evalExpr, stmt.rigth, env, 
+				mylog("Returning thunk for update...");
+				return thunk(evalExpr, stmt.right, env, 
 						function(right){
-							update(env, stmt.left, val);
-							return thunk(cont, right);
+							mylog("Running update!");
+							update(env, stmt.left, right);
+							return thunk(cont, 0);
 						}, xcont);
         case 'if':
 				// if( Expr ) { Body ... }
@@ -337,7 +347,7 @@ var evalStatement = function (stmt, env, cont, xcont) {
 				return thunk(evalExpr, stmt.expr, env, 
 						function(cond){
 							if(cond){
-								val = evalStatements(stmt.body, env, cont, xcont);
+								val = evalFullStatements(stmt.body, env, cont, xcont);
 							}
 							return thunk(cont, val);
 						}, xcont);
@@ -352,9 +362,11 @@ var evalStatement = function (stmt, env, cont, xcont) {
 
 				return thunk(evalExpr, stmt.expr, env, 
 						function(times){
+							mylog("Entered repeat (" + times + ")");
 							var val = null;
 							while(times--){
-								val = evalStatements(stmt.body, env);
+								mylog(times + "times more ...");
+								val = evalFullStatements(stmt.body, env);
 							}
 							return thunk(cont, val);
 						}, xcont);
@@ -395,7 +407,7 @@ var evalStatement = function (stmt, env, cont, xcont) {
 				return 0;*/
     }
 
-	if(typeof stmt.tag === undefined)
+	if(stmt.tag == undefined)
 		throw 'without tag in ' + JSON.stringify(stmt)
 	else
 		throw 'tag ' + stmt.tag + ' is not implemented!';
@@ -417,7 +429,7 @@ var evalStatements = function (seq, env, cont, xcont) {
  Create a thunk for a function and its arguments
 */
 var thunk = function (f) {
-	if(typeof f === undefined)
+	if(f == undefined)
 		throw 'Please do not create a thunk without a function!!!';
 
 	var args = Array.prototype.slice.call(arguments);
@@ -437,7 +449,7 @@ var thunkValue = function (x) {
 */
 var trampoline = function (thk) {
 	while (true) {
-		if(typeof thk === undefined)
+		if(thk == undefined)
 			throw 'thk undefined at trampoline()';
 
 
@@ -446,7 +458,8 @@ var trampoline = function (thk) {
 		} else if (thk.tag === "thunk") {
 			thk = thk.func.apply(null, thk.args);
 		} else {
-			console.log(thk);
+			mylog("BAD THUNK!");
+			mylog(thk);
 			throw new Error("Bad thunk");
 		}
 	}
@@ -503,7 +516,7 @@ var evalTwo = function (expr0, expr1, env) {
 var step = function(state){
 
 	var thk = state.data;
-	if(typeof thk === undefined)
+	if(thk == undefined)
 		throw 'thk undefined at step(...)';
 
 	if (thk.tag === "value") {        
@@ -517,8 +530,9 @@ var step = function(state){
 
 		return state;
 	} else {
-		console.log(state);
-		console.log(thk);
+		mylog("BAD THUNK!");
+		mylog(state);
+		mylog(thk);
 		throw new Error("Bad thunk");
 	}
 
@@ -536,16 +550,21 @@ var trace = function(funname){
 				function(){
 						var args = Array.prototype.slice.call(arguments);
 						i+=1;
-						console.log("TRACE[" + i + "]: enter " + funname + " (")
-						console.log(args);
-						console.log(")")
+						mylog("TRACE[" + i + "]: enter " + funname + " (")
+						mylog(args);
+						mylog(")")
 						var res = tmp.apply(null, args);						
-						console.log("TRACE[" + i + "]: exit  " + funname + " = ");
-						console.log(res);
+						mylog("TRACE[" + i + "]: exit  " + funname + " = ");
+						mylog(res);
 						i-=1;
 						return res;
 					} + ")");
 }
+
+var mylog = function(stuff){
+	console.log(stuff);
+}
+
 /**/
 trace("stepStart");
 trace("evalExpr");
