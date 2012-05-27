@@ -4,13 +4,21 @@
 This wont work for recursive functions. If needed, use the Y-combinator
 */
 var simpleFunCombinator = function(v){
-	return function(){
-		var args = Array.prototype.slice.call(arguments); 
+	return function(args, env, cont, xcont){
+		//var args = Array.prototype.slice.call(arguments); 
 		mylog("ENTER IN COMBINATED");
+		//mylog(args);
+		//args = args[0]; // The rest is the env, cont and xcont
 		mylog(args);
-		args = args[0]; // The rest is the env, cont and xcont
-		mylog(args);
-		var res = v.apply(null, args.map(function(n){ mylog("TO PARSE:"); mylog(n); return trampoline(n); }));
+		var res = v.apply(null, args.map(
+											function(n){
+												mylog("TO PARSE:"); 
+												mylog(n); 
+												var res = trampoline(n); 
+												mylog("PARSED:"); 
+												mylog(res); 
+												return res; 
+											}));
 		
 		if(res == undefined)
 			res = 0;
@@ -228,7 +236,7 @@ var graphicsEnv = undefined;
 // TORTOISE EVALUATION
 var initial_functions = {
 	'random' : simpleFunCombinator(function(){ return Math.random(); }),
-	'randomInterval' : simpleFunCombinator(function(min, max){ return Math.random() * (max - min) + min; })
+	'randomInterval' : simpleFunCombinator(function(min, max){ mylog("Called randomInterval("+min+", "+max+")"); return Math.random() * (max - min) + min; })
 };
 
 var env = { bindings: initial_functions };
@@ -292,7 +300,7 @@ function evalExpr(expr, env, cont, xcont){
 				var ev_args = [];
 				var i = 0;
 				for(i = 0; i < expr.args.length; i++) {
-					ev_args[i] = evalExpr(expr.args[i], env, cont, xcont);
+					ev_args[i] = evalExpr(expr.args[i], env, thunkValue, xcont);
 				}
 				mylog("DBG " + expr.name + " = " + func.toString());
 				mylog(ev_args);
@@ -336,7 +344,9 @@ var evalStatement = function (stmt, env, cont, xcont) {
 				return thunk(evalExpr, stmt.right, env, 
 						function(right){
 							mylog("Running update!");
+							mylog(env);
 							update(env, stmt.left, right);
+							mylog(env);
 							return thunk(cont, 0);
 						}, xcont);
         case 'if':
@@ -470,10 +480,12 @@ var trampoline = function (thk) {
  Setup an aux structure for step-by-step evaluation
 */
 var stepStart = function (expr, env, cont, xcont) {
-    return { 
-        data: evalStatement(expr, env, cont, xcont),
-        done: false
-    };
+	var ret = { 
+		data: evalStatement(expr, env, cont, xcont),
+		done: false
+	};
+	ret.new_env = env;
+	return ret;
 };
 
 /*
