@@ -1,0 +1,78 @@
+// FIXME Assume expressions without trailing spaces
+
+start =
+    expression
+  / comment
+
+// Any valid expression
+expression =
+    wild_atom
+  / wild_lstexp
+  / quoted_expression
+
+// A lone comment, that may or not end with a newline
+comment = 
+	";;" (!newline .)* newline?
+	{return [];}
+
+decimalpart =
+	"." validnumber+
+
+number_str =
+	digits:validnumber+
+{ return digits.join("");}
+
+// A sequence of valid chars or a number
+atom =
+	     nbrs:number_str tail:("." number_str)?
+    {return parseFloat(nbrs + (tail ? tail.join("") : ""));}
+      / chars:validchar+
+    {return chars.join("");}
+
+
+// optional comment paired with optional whitespace
+paircommwhite =
+	comment 
+      / whitespace
+
+// quoted expression
+quoted_expression =
+        whitespace* "'" stuff:expression whitespace*
+    { return ["quote", stuff]; }
+
+// A valid atom with any number of trailing spaces (left and right) or comments
+wild_atom =
+	paircommwhite* head:atom paircommwhite*
+    {return head;}
+
+// A valid expression with any number of trailing spaces or comments
+wild_exp =
+        paircommwhite* rest:expression paircommwhite*
+    {return rest;}
+
+wild_lstexp =
+        paircommwhite* rest:list_expressions paircommwhite*
+    {return rest;}
+    
+// A valid char for an expression
+validchar =
+	[0-9a-zA-Z_?!+\-=@#$%^&*/.]
+
+validnumber =
+	[0-9]
+
+// A whitespace
+whitespace = 
+	[" "|"\t"|"\n"|"\r"|"\r\n"]
+
+// A list of expressions
+list_expressions =
+		"(" head:wild_exp tail:wild_exp* ")"
+	{ return [ head ].concat(tail); }
+	/ 	"(" whitespace* ")"
+	{ return []; }
+
+newline =
+	"\r\n"
+     /  "\r"
+     /  "\n"
