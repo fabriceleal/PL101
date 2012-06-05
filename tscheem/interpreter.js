@@ -111,8 +111,9 @@ var specials = {
 		var argName = args[0];
 		var body = args[1];
 
-		return 	function(myArgs){
-						return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], env /*Capture the env of lambda.*/);
+		return 	function(myArg){
+						//console.log('myArg = ' + JSON.stringify(myArg));
+						return evalScheem(['let-one', argName, myArg /* Assume one arg!*/, body], env /*Capture the env of lambda.*/);
 					};
     }/*, TODO REDO
     'lambda':function(args, env){
@@ -248,7 +249,7 @@ var evalScheem = function (expr, env) {
 		return specials[expr[0]](expr.slice(1), env);
 	}
 
-	if(expr.length > 2)
+	if(expr.length != 2)
 		throw 'Invalid function application = ' + JSON.stringify(expr);
 
 	// Assume that is user defined function, returned by evaling the head
@@ -257,6 +258,7 @@ var evalScheem = function (expr, env) {
 		throw 'Head of ' + JSON.stringify(expr) + ' is not a function!';
 
 	if(tmp){
+		//console.log('arg = ' + JSON.stringify(expr[1]));
 		// Every function has only one arg.
 		return tmp(evalScheem(expr[1], env));
 	}
