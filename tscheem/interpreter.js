@@ -51,6 +51,124 @@ var update = function (env, v, val) {
 	update(env.outer, v, val);
 };
 
+/*-------- Static Typing ---------*/
+
+/*
+ * Helper - create basetype label
+ */
+var base = function (name) {
+    return { tag: 'basetype', name: name };
+};
+
+/*
+ * Helper - create arrow label
+ */
+var arrow = function (left, right) {
+    return { tag: 'arrowtype', 
+             left: left,
+             right: right };
+};
+
+/*
+ * Prettyfies a type
+ */
+var prettyType = function (type) {
+    if(!type.hasOwnProperty('tag'))
+        throw new Error('Arg doesnt have tag!');
+    
+    switch(type.tag){
+        case 'basetype':
+            return type.name;
+        case 'arrowtype':
+            return '(' + prettyType(type.left) + ' -> ' + prettyType(type.right) +')';
+    }
+    
+    throw new Error('Unexpected tag: ' + type.tag);
+};
+
+var typeExpr = function (expr, context) {
+    if (typeof expr === 'number') {
+        return { tag: 'basetype', name: 'num' };
+    }
+    if (typeof expr === 'string') {
+        return lookup(context, expr);
+    }
+    if (typeof expr === 'boolean') {
+        return { tag: 'basetype', name: 'bool' };
+    }
+    if (expr[0] === 'if') {
+        return typeExprIf(expr, context);
+    }
+	if (expr[0] === 'lambda-one') {
+		return typeExprLambdaOne(expr, context);
+	}
+    // Application (A B)
+    var A = expr[0];
+    var B = expr[1];
+    var A_type = typeExpr(A, context);
+    var B_type = typeExpr(B, context);
+    // Check that A type is arrow type
+    if (A_type.tag !== 'arrowtype') {
+        throw new Error('Not an arrow type');
+    }
+    var U_type = A_type.left;
+    var V_type = A_type.right;
+    // Verify argument type matches
+    if (sameType(U_type, B_type) === false) {
+        throw new Error('Argument type did not match');
+    }
+    return V_type;
+};
+
+var typeExprIf = function (expr, context) {
+    if(expr.length !== 4)
+        throw new Error('Weird size (' + expr.length +')... ');
+        
+    if(!sameType(typeExpr(expr[1], context), typeExpr(true, {})))
+        throw new Error('Condition expr is not bool!');
+    
+    var trueBranch = typeExpr(expr[2], context);    
+    var falseBranch = typeExpr(expr[3], context);
+    
+    if(!sameType(trueBranch, falseBranch))
+        throw new Error('Types of true and false do not match!');
+    
+    return trueBranch;
+};
+
+var typeExprLambdaOne = function (expr, context) {
+    if(expr.length !== 4)
+        throw new Error('Weird length (' + expr.length + ') ...');
+    
+    // Create new context with arg
+    context = {
+        bindings: { },
+        outer: context
+    };
+    context.bindings[expr[1]] = expr[2];
+        
+    return {
+        tag: 'arrowtype',
+        left: expr[2],
+        right: typeExpr(expr[3], context)
+    };
+};
+
+/*
+ * Tests if two types match
+ */
+var sameType = function (a, b) {
+    if(a.tag !== b.tag)
+        return false;
+    
+    switch(a.tag){
+        case 'basetype':
+            return (a.name === b.name);
+        case 'arrowtype':
+            return sameType(a.left, b.left) && sameType(a.right, b.right);
+    }
+    throw new Error('Unexpected!');
+};
 
 /*-------- The interpreter ---------*/
 // Special forms are responsible for eval'ing and validating their args; 
