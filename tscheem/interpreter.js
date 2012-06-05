@@ -25,36 +25,6 @@ var isNumber = function(arg){
 	return typeof arg === 'number';
 };
 
-
-var nbrReduction = function(name, args, mathFun){
-	//console.log('nbrReduction');
-	//console.log(args);
-
-	// Validate args
-	/* This is failing for some reason. FUCK YOU FIREFOX!
-	if(!(args) || args.constructor != Array || args.length == 0){
-		//console.log(args);
-		//console.log(args.constructor != Array);
-		//console.log(args.length);
-		throw name + ' called without parameters!';
-	}*/
-
-	// Parse head
-
-	// If head is not a number
-	if(!isNumber(args[0])){
-		throw 'There are arguments (' + args[0] +') in ' + name + ' that are not numbers!';
-	}
-
-	// Call recursively if there are any more args
-	if(args.length > 1){
-		//console.log(args.length);
-		//console.log(args.slice(1));
-		return mathFun(args[0], nbrReduction(name, args.slice(1), mathFun));
-	}
-	return args[0];
-}
-
 var lookup = function (env, v) {
 	if(!env || !env.bindings){
 		throw 'lookup couldnt find ' + v + ' in env!';
@@ -144,7 +114,7 @@ var specials = {
 		return 	function(myArgs){
 						return evalScheem(['let-one', args[0], myArgs[0]/* Assume one arg!*/, body], env /*Capture the env of lambda.*/);
 					};
-    },
+    }/*, TODO REDO
     'lambda':function(args, env){
 		var argNames = args[0];
 		var body = args[1];
@@ -165,75 +135,82 @@ var specials = {
 					// Call evalScheem
 					return evalScheem(toCall, callingEnv);
 				}
-	}
+	}*/
 };
 
 // functions dont need env!
 var initial_env = {
-	'car':function(args){
-		if(!args || args.constructor != Array || args.length == 0)
-			throw 'No args for car!';
-
-		if(args.length > 1)
-			throw 'Weird number of args for car (1)!'
-
-		if(typeof args[0] === 'undefined')
+	'car':function(list){
+		if(typeof list === 'undefined')
 			throw 'Args evaluated to empty object in car!';
 
-		if(args[0].constructor != Array)
+		if(list.constructor != Array)
 			throw 'Evaluated arg is not an Array in car!';
 
-		if(args[0].length == 0)
+		if(list.length == 0)
 			throw 'Evaluated arg is an empty Array in car!';
 
-		return args[0][0];
+		return list[0];
 	},
-	'cdr':function(args){
-		if(!args || args.constructor != Array || args.length == 0)
-			throw 'No args for cdr!';
+	'cdr':function(list){
+		if(typeof list === 'undefined')
+			throw 'Arg evaluated to empty object in cdr!';
 
-		if(args.length > 1)
-			throw 'Weird number of args for cdr (1)!'
-
-		if(typeof args[0] === 'undefined')
-			throw 'Args evaluated to empty object in cdr!';
-
-		if(args[0].constructor != Array)
+		if(list.constructor != Array)
 			throw 'Evaluated arg is not an Array in cdr!';
 
-		if(args[0].length == 0)
+		if(list.length == 0)
 			throw 'Evaluated arg is an empty Array in cdr!';
 
 		// This does like in Common Lisp, (cdr '(a)) => '()
-		return args[0].slice(1);
+		return list.slice(1);
 	},
-	'+' : function(args){
-		return nbrReduction('+', args, function(x, y){return x + y;});
+	'+' : function(fst){
+		return function(snd){
+			return fst + snd;
+		};
 	},
-	'*' : function(args){
-		return nbrReduction('*', args, function(x, y){return x * y;});
+	'*' : function(fst){
+		return function(snd){
+			return fst * snd;
+		};
 	},
-	'/' : function(args){
-		return nbrReduction('/', args, function(x, y){ if(y == 0) throw 'Cannot divide by zero in Scheem!'; return x / y;});
+	'/' : function(fst){
+		return function(snd){
+			if(snd === 0)
+				throw 'This language does not divide by zero!';
+
+			return fst / snd;
+		};
 	},
-	'-' : function(args){
-		return nbrReduction('-', args, function(x, y){return x - y;});
+	'-' : function(fst){
+		return function(snd){
+			return fst - snd;
+		};
 	},
-	'<' : function(args){
-		return args[0] < args[1] ? '#t' : '#f';
+	'<' : function(left){
+		return function(right){
+			return left < right ? '#t' : '#f';
+		};
 	},
-	'>' : function(args){
-		return args[0] > args[1] ? '#t' : '#f';
+	'>' : function(left){
+		return function(right){
+			return left > right ? '#t' : '#f';
+		};
 	},
-	'cons':function(args){
-		return [args[0]].concat(args[1]);
+	'cons':function(head){
+		return function(tail){
+			return [head].concat(tail);
+		};
 	},
-	'=' : function(args){
-		return args[0] == args[1] ? '#t' : '#f';
+	'=' : function(left){
+		return function(right){
+			return left == right ? '#t' : '#f';
+		};
 	},
-	'emptyp' : function(args){
+	'emptyp' : function(list){
 		// Like in common-lisp, NIL == '(). 
-		return (args[0] == null || (args[0].constructor == Array && args[0].length == 0)) ? '#t' : '#f' ;
+		return (list == null || (list.constructor == Array && list.length == 0)) ? '#t' : '#f' ;
 	}
 };
 
@@ -271,17 +248,17 @@ var evalScheem = function (expr, env) {
 		return specials[expr[0]](expr.slice(1), env);
 	}
 
+	if(expr.length > 2)
+		throw 'Invalid function application = ' + JSON.stringify(expr);
+
 	// Assume that is user defined function, returned by evaling the head
 	var tmp = evalScheem(expr[0], env);
 	if(typeof tmp !== 'function')
 		throw 'Head of ' + JSON.stringify(expr) + ' is not a function!';
 
 	if(tmp){
-		//console.log('evaling as user function');
-		return tmp(
-					expr.slice(1).map(
-							function(par){return evalScheem(par, env);}
-				));
+		// Every function has only one arg.
+		return tmp(evalScheem(expr[1], env));
 	}
 };
 
