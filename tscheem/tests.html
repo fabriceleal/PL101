@@ -1,0 +1,147 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <title>Mocha Tests</title>
+  <link rel="stylesheet" href="../general/mocha.css">
+  <script src="../general/jquery-1.7.min.js">
+  </script>
+  <script src="../general/chai.js">
+  </script>
+  <script src="../general/mocha.js">
+  </script>
+  <script src="../general/get_data.js">
+  </script>
+  <script>mocha.setup('tdd')</script>
+  <script src="interpreter.js"></script>
+  <script src="evalScheemString.js"></script>
+  <script>
+	var assert = chai.assert;
+
+	var SCHEEM = null;
+
+	$(function(){
+			getData('parser.js', function(compiled){
+				// Download and compile parser
+
+				SCHEEM = compiled;
+				console.log('Downloaded parser for scheem!!');
+
+				// Download and compile tests;
+				// First the parser, then the interpreter!
+				getData('parser.tests.json', function(parserTests){
+						// Run parser tests
+						(function(tests){
+							tests.forEach(function(item){
+								suite(item.suite, function(){
+									console.log(JSON.stringify(item));
+									item.tests.forEach(function(thisTest){
+
+										var compiled = null;
+
+										// "Compile" the function, or it won't appear in the html :|
+										if(thisTest.expected){
+											// Expect cool output
+											compiled = eval('(function(){assert.deepEqual( SCHEEM(' + 
+													JSON.stringify(thisTest.test) + ') , ' + 
+													JSON.stringify(thisTest.expected) + ' );})');
+											//---
+										}else{
+											// Expect exception
+											compiled = eval('(function(){ assert.throws(function(){ SCHEEM(' + 
+													JSON.stringify(thisTest.test) + ') }); })');
+											//---
+										}
+
+										test(thisTest.description, compiled);
+
+									});
+								});
+							});
+						})(parserTests); // Run parser tests
+
+						getData('interpreter.tests.json', function(interpreterTests){
+								// Run interpreter tests
+								(function(tests){
+									tests.forEach(function(item){
+										suite(item.suite, function(){
+											item.tests.forEach(function(thisTest){
+
+												var compiled = null;
+
+												// "Compile" the function, or it won't appear in the html :|
+												if(thisTest.expected){
+													// Expect cool output
+													compiled = eval('(function(){assert.deepEqual( evalScheemExternal(' + 
+															JSON.stringify(thisTest.test) + ', ' + 
+															JSON.stringify(thisTest.env)+') , ' + 
+															JSON.stringify(thisTest.expected) + ' );})');
+													//---
+												}else{
+													// Expect exception
+													compiled = eval('(function(){ assert.throws(function(){ evalScheemExternal(' + 
+															JSON.stringify(thisTest.test) + ', ' + 
+															JSON.stringify(thisTest.env) + ') }); })');
+													//---
+												}
+
+												test(thisTest.description, compiled);
+
+											});
+										});
+									});
+								})(interpreterTests); // Run interpreter tests
+
+
+								getData('evalScheemString.tests.json', function(plTests){
+
+										// Run pl tests
+										(function(tests){
+											tests.forEach(function(item){
+												suite(item.suite, function(){
+													item.tests.forEach(function(thisTest){
+
+														var compiled = null;
+
+														// "Compile" the function, or it won't appear in the html :|
+														if(thisTest.expected){
+															// Expect cool output
+															compiled = eval('(function(){assert.deepEqual( evalScheemString(' + 
+																	JSON.stringify(thisTest.test) + ', ' + 
+																	JSON.stringify(thisTest.env)+') , ' + 
+																	JSON.stringify(thisTest.expected) + ' );})');
+															//---
+														}else{
+															// Expect exception
+															compiled = eval('(function(){ assert.throws(function(){ evalScheemString(' + 
+																	JSON.stringify(thisTest.test) + ', ' + 
+																	JSON.stringify(thisTest.env) + ') }); })');
+															//---
+														}
+
+														test(thisTest.description, compiled);
+
+													});
+												});
+											});
+										})(plTests); // Run pl tests
+
+
+										mocha.run();
+								});
+
+						}); // getData('interpreter.tests.json', ...
+
+				}); // getData('parser.tests.json', ...
+			});
+
+			// Download and compile test for the interpreter, 
+			
+	});
+  </script>
+  <script>
+
+  </script>
+</head>
+<body>
+	<div id="mocha"></div>
+</body></html>

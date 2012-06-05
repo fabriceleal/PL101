@@ -1,0 +1,76 @@
+[
+	{
+		"suite" : "program",
+		"tests" : [
+			{
+				"description" : "eval a sum",
+				"test" : "((+ 2) 2)",
+				"env" : {"bindings": {}, "outer":{}},
+				"expected" : 4
+			}
+		]
+	},
+	{
+		"suite" :"recursion",
+		"tests" : [
+			{
+				"description": "factorial",
+				"test": "(begin (define factorial (lambda (n) (if ((= n) 1) 1 (* n (factorial ((- n) 1))) ))) (factorial 4))",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : 24
+			},
+			{
+				"description": "factorial with external binding >:D",
+				"test": "(begin (define factorial (lambda (n) (if ((= n) 1) 1 (* n (factorial ((- n) 1))) ))) (factorial n))",
+				"env" : {"bindings":{ "n" : 5}, "outer":{}},
+				"expected" : 120
+			}
+		]
+	},
+	{
+		"suite" : "lexical scope",
+		"tests" :[
+			{
+				"description" : "Lexical scope, no shadowing",
+				"test" : "(let-one x 1 ((lambda-one n ((+ n) x)) 5))",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : 6
+			},
+			{
+				"description" : "Lexical scope, with shadowing",
+				"test" : "(let-one x 10 (let-one x 1 ((lambda-one n ((+ n) x)) 5)))",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : 6
+			}
+		]
+	},
+	{
+		"suite" : "quote",
+		"tests" : [
+			{
+				"description" : "Quote on Atom",
+				"test" : "'a",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : "a"
+			},
+			{
+				"description" : "Quote on List",
+				"test" : "'(a b c)",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : ["a", "b", "c"]
+			},
+			{
+				"description" : "Quote on Empty List",
+				"test" : "'()",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : []
+			},
+			{
+				"description" : "Quote on Function Call",
+				"test" : "(cdr '(a b c))",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : ["b", "c"]
+			}
+		]
+	}
+]
