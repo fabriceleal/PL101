@@ -32,13 +32,13 @@
 		"tests" :[
 			{
 				"description" : "Lexical scope, no shadowing",
-				"test" : "((let-one x 1 (lambda-one n ((+ n) x))) 5)",
+				"test" : "(let-one x 1 (lambda-one n ((+ n) x))) 5))",
 				"env" : {"bindings":{}, "outer":{}},
 				"expected" : 6
 			},
 			{
 				"description" : "Lexical scope, with shadowing",
-				"test" : "(let-one x 10 ((let-one x 1 (lambda-one n ((+ n) x))) 5))",
+				"test" : "(let-one x 10 ((let-one x 1 (lambda-one n ((+ n) x))) 5)))",
 				"env" : {"bindings":{}, "outer":{}},
 				"expected" : 6
 			}
