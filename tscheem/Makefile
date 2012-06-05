@@ -13,7 +13,6 @@ clean:
 .PHONY: deploy
 # Copy parser, interpreter and tests
 deploy:
-	cp parser.js $(PROJECT_HOME)
-	cp interpreter.js $(PROJECT_HOME)
+	cp *.js $(PROJECT_HOME)
 	cp tests/*.tests.json $(PROJECT_HOME)
 
