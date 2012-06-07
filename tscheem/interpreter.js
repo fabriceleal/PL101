@@ -86,38 +86,78 @@ var prettyType = function (type) {
     throw new Error('Unexpected tag: ' + type.tag);
 };
 
-var typeExpr = function (expr, context) {
-    if (typeof expr === 'number') {
-        return { tag: 'basetype', name: 'num' };
-    }
-    if (typeof expr === 'string') {
-        return lookup(context, expr);
-    }
-    if (typeof expr === 'boolean') {
-        return { tag: 'basetype', name: 'bool' };
-    }
-    if (expr[0] === 'if') {
-        return typeExprIf(expr, context);
-    }
-	if (expr[0] === 'lambda-one') {
-		return typeExprLambdaOne(expr, context);
+// My type system:
+// seq
+// atom*
+// |- num
+// |- bool
+// |- string
+
+// * - atom is not a actual type, but rather a collection of types
+
+var typeExpr = function (expr, context /* this is the type context, of course */ ) {
+	// "Scalars" *****************************
+	if (typeof expr === 'number') {
+		return base('num');
 	}
-    // Application (A B)
-    var A = expr[0];
-    var B = expr[1];
-    var A_type = typeExpr(A, context);
-    var B_type = typeExpr(B, context);
-    // Check that A type is arrow type
-    if (A_type.tag !== 'arrowtype') {
-        throw new Error('Not an arrow type');
-    }
-    var U_type = A_type.left;
-    var V_type = A_type.right;
-    // Verify argument type matches
-    if (sameType(U_type, B_type) === false) {
-        throw new Error('Argument type did not match');
-    }
-    return V_type;
+	if (typeof expr === 'string') {
+		return lookup(context, expr);
+	}
+	if (typeof expr === 'boolean') {
+	   return base('bool');
+	}
+
+	// Special forms *************************
+	switch(expr[0]){
+		case 'if':
+			return typeExprIf(expr, context);
+	
+		case 'lambda-one':
+			return typeExprLambdaOne(expr, context);
+	
+		case 'quote':
+			var elem = expr[1];
+			/*
+			console.log( elem );
+			console.log( elem.constructor );
+
+			console.log( elem instanceof Array );
+			console.log( elem.constructor == Array );
+			console.log( elem.constructor === Array );*/
+
+			// I don't know why, but I can't find a way of checking if elem is an array. 
+			// All the usual checks fail!!! FUCK!!!
+			if(elem.hasOwnProperty('length')){
+				return base('seq');
+			}else if (typeof elem === 'string'){
+				return base('string');
+			}else{
+				return typeExpr(elem, context);
+			}
+		
+		case 'set!': case 'begin': case 'define': case 'let-one':
+			throw expr[0] + ' not implemented yet!';			
+	}
+
+	// Application (A B) *********************
+
+	var A = expr[0];
+	var B = expr[1];
+	var A_type = typeExpr(A, context);
+	var B_type = typeExpr(B, context);
+	// Check that A type is arrow type
+	if (A_type.tag !== 'arrowtype') {
+		throw new Error('Not an arrow type');
+	}
+	var U_type = A_type.left;
+	var V_type = A_type.right;
+
+	// Verify argument type matches
+	if (sameType(U_type, B_type) === false) {
+		throw new Error('Argument type did not match');
+	}
+
+	return V_type;
 };
 
 var typeExprIf = function (expr, context) {
@@ -163,11 +203,17 @@ var sameType = function (a, b) {
     
     switch(a.tag){
         case 'basetype':
+				// basetypes - any non-seq should be considered an atom. 
+				if(a.name === 'atom')
+					return b.name !== 'seq';
+				if(b.name === 'atom')
+					return a.name !== 'seq';
+
             return (a.name === b.name);
         case 'arrowtype':
             return sameType(a.left, b.left) && sameType(a.right, b.right);
     }
-    throw new Error('Unexpected!');
+    throw new Error('Unexpected on sameType!');
 };
 
 /*-------- The interpreter ---------*/
@@ -176,21 +222,23 @@ var sameType = function (a, b) {
 
 
 var specials = {
-	'define' : function(args, env){
+	'define' : function(args, env, t_env){
 		// This is equivalent to the ex6 from chap5 (funcs5.js)
-		env.bindings[args[0]] = evalScheem(args[1], env);
+		env.bindings[args[0]] = evalTScheem(args[1], env, t_env);
+		t_env.bindings[args[0]] = typeExpr(args[1], t_env);
 		return 0;
 	},
-	'set!' : function(args, env){
+	'set!' : function(args, env, t_env){
 		update(env, args[0], args[1]);
+		update(t_env, args[0], typeExpr(args[1], t_env));
 		return 0;
 	},
-	'begin' : function(args, env){
+	'begin' : function(args, env, t_env){
 		if(args.length == 0)
 			throw 'No body for begin!';
 
 		// Eval head
-		var res = evalScheem(args[0], env);
+		var res = evalTScheem(args[0], env, t_env);
 
 		// Eval recursively
 		if(args.length > 1){
@@ -200,38 +248,44 @@ var specials = {
 
 		return res;
 	},
-	'quote' : function(args, env){
-		console.log('quoting as-is:');
-		console.log(args[0]);
+	'quote' : function(args, env, t_env){
+		//console.log('quoting as-is:');
+		//console.log(args[0]);
 		return args[0];
 	},
-	'if':function(args, env){
+	'if':function(args, env, t_env){
 		if(!args || args.constructor != Array || args.length == 0)
 			throw 'No args for if!';
 
 		if(args.length != 3)
 			throw 'Weird number of args for if (3)!';
 
-		return evalScheem(args[0], env) == '#t' ? evalScheem(args[1], env) : evalScheem(args[2], env);
+		return evalTScheem(args[0], env, t_env) == '#t' ? evalTScheem(args[1], env, t_env) : evalTScheem(args[2], env, t_env);
 	},
-	'let-one':function(args, env){
+	'let-one':function(args, env, t_env){
 		// Creates a new env, shadowing the previous one
-		var varExprEvaled = evalScheem(args[1], env)
+		var varExprEvaled = evalTScheem(args[1], env, t_env)
 		var myEnv = {
 			'bindings': { },
 			'outer' : env
 		};
 		myEnv.bindings[args[0]] = varExprEvaled;
 
-		return evalScheem(args[2], myEnv);
+		var myTEnv = {
+			bindings : {},
+			outer : t_env
+		};
+		myTEnv.bindings[args[0]] = typeExpr(varExprEvaled, t_env);
+
+		return evalTScheem(args[2], myEnv, myTEnv);
 	},
-	'lambda-one':function(args, env){
+	'lambda-one':function(args, env, t_env){
 		var argName = args[0];
 		var body = args[1];
 
 		return 	function(myArg){
 						//console.log('myArg = ' + JSON.stringify(myArg));
-						return evalScheem(['let-one', argName, myArg /* Assume one arg!*/, body], env /*Capture the env of lambda.*/);
+						return evalTScheem(['let-one', argName, myArg /* Assume one arg!*/, body], env /*Capture the env of lambda.*/, t_env);
 					};
     }/*, TODO REDO
     'lambda':function(args, env){
@@ -251,13 +305,30 @@ var specials = {
 						callingEnv.bindings[item] = myArgs[idx];						
 					});
 					
-					// Call evalScheem
-					return evalScheem(toCall, callingEnv);
+					// Call evalTScheem
+					return evalTScheem(toCall, callingEnv);
 				}
 	}*/
 };
 
+
 // functions dont need env!
+var initial_env_types = {
+	'car' : arrow(base('seq'), base('atom')),
+	'cdr' : arrow(base('seq'), base('seq')),
+	'cons': arrow(base('atom'), arrow(base('seq'), base('seq'))),
+	'empty-p': arrow(base('seq'), base('bool')),
+	'+' : arrow(base('num'), arrow(base('num'), base('num'))),
+
+	'-' : arrow(base('num'), arrow(base('num'), base('num'))),
+	'/' : arrow(base('num'), arrow(base('num'), base('num'))),
+	'*' : arrow(base('num'), arrow(base('num'), base('num'))),
+
+	'=' : arrow(base('num'), arrow(base('num'), base('bool'))),
+	'<' : arrow(base('num'), arrow(base('num'), base('bool'))),
+	'>' : arrow(base('num'), arrow(base('num'), base('bool')))
+};
+
 var initial_env = {
 	'car':function(list){
 		if(typeof list === 'undefined')
@@ -333,7 +404,7 @@ var initial_env = {
 	}
 };
 
-var evalScheem = function (expr, env) {
+var evalTScheem = function (expr, env, t_env) {
 	//console.log(expr);
 	//console.log(typeof expr);
 
@@ -358,36 +429,51 @@ var evalScheem = function (expr, env) {
 	// Strings are variable references
 	if (typeof expr === 'string') {
 		//console.log('evaling as lookup');
-		return lookup(env, expr);
+		return lookup(env, expr, t_env);
 	}
 
 	// Look at head of list for operation
 	if(specials.hasOwnProperty(expr[0])){
 		//console.log('evaling as special form');
-		return specials[expr[0]](expr.slice(1), env);
+		return specials[expr[0]](expr.slice(1), env, t_env);
 	}
 
 	if(expr.length != 2)
 		throw 'Invalid function application = ' + JSON.stringify(expr);
 
 	// Assume that is user defined function, returned by evaling the head
-	var tmp = evalScheem(expr[0], env);
+	var tmp = evalTScheem(expr[0], env, t_env);
 	if(typeof tmp !== 'function')
 		throw 'Head of ' + JSON.stringify(expr) + ' is not a function!';
 
 	if(tmp){
-		//console.log('arg = ' + JSON.stringify(expr[1]));
-		// Every function has only one arg.
-		return tmp(evalScheem(expr[1], env));
+		// Before evaling a function,
+		// get arg type, get function type, test
+		var arg = evalTScheem(expr[1], env, t_env);
+		var argType = typeExpr(arg, t_env);
+		var funType = lookup(t_env, expr[0]);
+
+		if (! sameType( argType , funType.left )){
+			throw 'Expression of type ' + prettyType(argType) + ' cannot be used as arg for function ' + expr[0] + ' which is ' + prettyType(funType);
+		}
+
+		return tmp(arg);
 	}
 };
 
-var evalScheemExternal = function(expr, env){
+/*
+ * Evals a tscheem expression
+ */
+var evalTScheemExternal = function(expr){
 	var new_env = {
 		bindings: initial_env,
-		outer: env
+		outer : {}
 	};
-	return evalScheem(expr, new_env);
+	var new_type_env = {
+		bindings: initial_env_types,
+		outer : {}
+	};
+	return evalTScheem(expr, new_env, new_type_env);
 }
 
 //--------------------------
