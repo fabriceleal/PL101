@@ -1,0 +1,18 @@
+expression = 
+    atom /
+    arrow
+
+atom = 
+     "num"
+     { return { tag:"basetype", name:"num" }; }
+     / "atom"
+     { return { tag:"basetype", name:"atom" }; }
+     / "bool"
+     { return { tag:"basetype", name:"bool" }; }
+     / "string" 
+     { return { tag:"basetype", name:"string" }; }
+
+arrow = "(" ws* aleft:expression ws* "->" ws* aright:expression ws* ")"
+    { return { tag:"arrowtype", left:aleft, right:aright }; }
+
+ws = [\n\t ]
