@@ -99,12 +99,12 @@ var typeExpr = function (expr, context /* this is the type context, of course */
 	// "Scalars" *****************************
 	if (typeof expr === 'number') {
 		return base('num');
+	}	
+	if (typeof expr === 'boolean' || expr === "#t" || expr === "#f") {
+	   return base('bool');
 	}
 	if (typeof expr === 'string') {
 		return lookup(context, expr);
-	}
-	if (typeof expr === 'boolean') {
-	   return base('bool');
 	}
 
 	// Special forms *************************
@@ -134,8 +134,45 @@ var typeExpr = function (expr, context /* this is the type context, of course */
 			}else{
 				return typeExpr(elem, context);
 			}
-		
-		case 'set!': case 'begin': case 'define': case 'let-one':
+		case 'define':
+			context.bindings[expr[1]] = typeExpr(expr[2], context);
+			return context.bindings[expr[1]];
+		case 'begin': 
+			var len = expr.length;
+			if(len == 1)
+				throw new Error('begin statement with no expressions?');
+
+			for(var i = 1; i < len-1; i++){
+				typeExpr(expr[i], context);
+			}
+
+			return typeExpr(expr[len - 1], context);
+		case 'let-one':
+			// (let-one var-name var-expr inner-expr)
+
+			var newCtx = {
+				bindings: {},
+				outer : context
+			};
+			newCtx.bindings[expr[1]] = typeExpr(expr[2], context);
+			
+			return typeExpr(expr[3], newCtx);
+			
+		case 'set!': 
+			// (set! var-name var-expr)
+			var slotType = lookup(context, expr[1]);
+			var cmpType = typeExpr(expr[2], context);
+
+			//console.log(prettyType(slotType));
+			//console.log(prettyType(cmpType));
+
+			if(sameType( slotType, cmpType )){
+				return slotType;
+			}
+
+			throw 'Expression of type ' + prettyType(cmpType) + ' does not match slot type ' + prettyType(slotType);
+
+		case 'lambda':
 			throw expr[0] + ' not implemented yet!';			
 	}
 
@@ -177,6 +214,7 @@ var typeExprIf = function (expr, context) {
 };
 
 var typeExprLambdaOne = function (expr, context) {
+	// (lambda-one arg-name arg-type body)
     if(expr.length !== 4)
         throw new Error('Weird length (' + expr.length + ') ...');
     
@@ -185,11 +223,11 @@ var typeExprLambdaOne = function (expr, context) {
         bindings: { },
         outer: context
     };
-    context.bindings[expr[1]] = expr[2];
-        
+    context.bindings[expr[1]] = base(expr[2]);
+    
     return {
-        tag: 'arrowtype',
-        left: expr[2],
+        tag:   'arrowtype',
+        left:  context.bindings[expr[1]],
         right: typeExpr(expr[3], context)
     };
 };
@@ -225,12 +263,12 @@ var specials = {
 	'define' : function(args, env, t_env){
 		// This is equivalent to the ex6 from chap5 (funcs5.js)
 		env.bindings[args[0]] = evalTScheem(args[1], env, t_env);
-		t_env.bindings[args[0]] = typeExpr(args[1], t_env);
+		// hmmm ... no need to update the type. won't be used anywhere.
 		return 0;
 	},
 	'set!' : function(args, env, t_env){
 		update(env, args[0], args[1]);
-		update(t_env, args[0], typeExpr(args[1], t_env));
+		// hmmm... no need to update the type. typeExpr prevents this.
 		return 0;
 	},
 	'begin' : function(args, env, t_env){
@@ -271,17 +309,14 @@ var specials = {
 		};
 		myEnv.bindings[args[0]] = varExprEvaled;
 
-		var myTEnv = {
-			bindings : {},
-			outer : t_env
-		};
-		myTEnv.bindings[args[0]] = typeExpr(varExprEvaled, t_env);
-
-		return evalTScheem(args[2], myEnv, myTEnv);
+		return evalTScheem(args[2], myEnv, t_env);
 	},
 	'lambda-one':function(args, env, t_env){
+		if(args.length != 3)
+			throw new Error('lambda-one with invalid number of args (' + args.length + ').');
+
 		var argName = args[0];
-		var body = args[1];
+		var body = args[2];
 
 		return 	function(myArg){
 						//console.log('myArg = ' + JSON.stringify(myArg));
@@ -425,6 +460,11 @@ var evalTScheem = function (expr, env, t_env) {
 	if(typeof expr === 'function'){
 		return expr;
 	}
+	
+	// Return bool literals as-is
+	if(expr === '#t' || expr === '#f'){
+		return expr;
+	}
 
 	// Strings are variable references
 	if (typeof expr === 'string') {
@@ -450,12 +490,6 @@ var evalTScheem = function (expr, env, t_env) {
 		// Before evaling a function,
 		// get arg type, get function type, test
 		var arg = evalTScheem(expr[1], env, t_env);
-		var argType = typeExpr(arg, t_env);
-		var funType = lookup(t_env, expr[0]);
-
-		if (! sameType( argType , funType.left )){
-			throw 'Expression of type ' + prettyType(argType) + ' cannot be used as arg for function ' + expr[0] + ' which is ' + prettyType(funType);
-		}
 
 		return tmp(arg);
 	}
@@ -464,16 +498,29 @@ var evalTScheem = function (expr, env, t_env) {
 /*
  * Evals a tscheem expression
  */
-var evalTScheemExternal = function(expr){
+var evalTScheemExternal = function(expr){	
+	if(!evalTScheemTypes(expr))
+		throw new Error('Invalid return by evalTScheemTypes');
+
 	var new_env = {
 		bindings: initial_env,
 		outer : {}
 	};
+
 	var new_type_env = {
 		bindings: initial_env_types,
 		outer : {}
 	};
+
 	return evalTScheem(expr, new_env, new_type_env);
+}
+
+var evalTScheemTypes = function(expr){
+	var new_type_env = {
+		bindings: initial_env_types,
+		outer : {}
+	};
+	return typeExpr(expr, new_type_env);
 }
 
 //--------------------------
