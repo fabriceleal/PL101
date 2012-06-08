@@ -1,3 +1,4 @@
+// You have to include type-literal.js
 
 /*------ Extensions ------ */
 Array.prototype.any = function(predicate){
@@ -215,21 +216,33 @@ var typeExprIf = function (expr, context) {
 
 var typeExprLambdaOne = function (expr, context) {
 	// (lambda-one arg-name arg-type body)
-    if(expr.length !== 4)
-        throw new Error('Weird length (' + expr.length + ') ...');
-    
-    // Create new context with arg
-    context = {
-        bindings: { },
-        outer: context
-    };
-    context.bindings[expr[1]] = base(expr[2]);
-    
-    return {
-        tag:   'arrowtype',
-        left:  context.bindings[expr[1]],
-        right: typeExpr(expr[3], context)
-    };
+	if(expr.length !== 4)
+		throw new Error('Weird length (' + expr.length + ') ...');
+
+	// Create new context with arg
+	context = {
+		bindings: { },
+		outer: context
+	};
+
+	try{
+		var collapse = function(arg){
+			if(typeof arg === 'function')
+				throw new Error('Are you braindead???');
+			if(typeof arg !== 'object')
+				return arg;
+			return '(' + arg.map(collapse).join(' ') + ')';
+		}
+		context.bindings[expr[1]] = typeparser.parse(collapse(expr[2]));
+	}catch(e){
+		throw new Error('Error processing type literal: ' + e.toString());
+	}
+
+	return {
+		tag:   'arrowtype',
+		left:  context.bindings[expr[1]],
+		right: typeExpr(expr[3], context)
+	};
 };
 
 /*
