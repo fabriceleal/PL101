@@ -45,6 +45,17 @@
 		]
 	},
 	{
+		"suite" : "lambda-one / quote / seq",
+		"tests" : [
+			{
+				"description" : "Define Lambda-one'd function, call with quote'd seq",
+				"test" : "(begin (define z (seq -> num) (lambda-one l seq (if (emptyp l) 0 ((+ 1) (z (cdr l)))))) (z '(1 2 3 4 5 6)) )",
+				"env" : {"bindings":{}, "outer":{}},
+				"expected" : 6
+			}
+		]
+	},
+	{
 		"suite" : "quote",
 		"tests" : [
 			{
