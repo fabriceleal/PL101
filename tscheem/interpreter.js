@@ -511,28 +511,54 @@ var evalTScheem = function (expr, env, t_env) {
 /*
  * Evals a tscheem expression
  */
-var evalTScheemExternal = function(expr){	
-	if(!evalTScheemTypes(expr))
+var evalTScheemExternal = function(expr, env){	
+	// Ugly hack: Get the types of the given env. I know its ugly.
+	var Tenv = { bindings:{}, outer:{}};
+	
+	var setTypes = function(ctx, env){
+		if(ctx.bindings == null){
+			ctx.bindings = [];
+		}
+		if(ctx.outer == null){
+			ctx.outer = [];
+		}
+		if(env.bindings != null){
+			for(var k in env.bindings){
+				ctx.bindings[k] = typeExpr(env.bindings[k]);
+			}
+
+			if(env.outer != null){
+				setTypes(ctx.outer , env.outer);
+			}
+		}
+	};
+	setTypes(Tenv, env);
+
+	if(!evalTScheemTypes(expr, Tenv))
 		throw new Error('Invalid return by evalTScheemTypes');
 
 	var new_env = {
 		bindings: initial_env,
-		outer : {}
+		outer : env
 	};
+	
 
 	var new_type_env = {
 		bindings: initial_env_types,
 		outer : {}
-	};
+	};	
 
 	return evalTScheem(expr, new_env, new_type_env);
 }
 
-var evalTScheemTypes = function(expr){
+var evalTScheemTypes = function(expr, env){
 	var new_type_env = {
 		bindings: initial_env_types,
 		outer : {}
 	};
+	if(env != null){
+		new_type_env.outer = env;
+	}
 	return typeExpr(expr, new_type_env);
 }
 
