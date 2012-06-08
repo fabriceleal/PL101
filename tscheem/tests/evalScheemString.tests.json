@@ -53,6 +53,7 @@
 				"env" : {"bindings":{}, "outer":{}},
 				"expected" : 6
 			}
+		]
 	},
 	{
 		"suite" : "quote",
