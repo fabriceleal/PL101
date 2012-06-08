@@ -293,26 +293,26 @@ var sameType = function (a, b) {
 
 
 var specials = {
-	'define' : function(args, env, t_env){
+	'define' : function(args, env){
 		if(args.length != 3)
 			throw 'define called with invalid number of arguments (' + args.length + ')';
 		// This is equivalent to the ex6 from chap5 (funcs5.js)
 		// (define var-name var-type expr)
-		env.bindings[args[0]] = evalTScheem(args[2], env, t_env);
+		env.bindings[args[0]] = evalTScheem(args[2], env);
 		// hmmm ... no need to update the type. won't be used anywhere.
 		return 0;
 	},
-	'set!' : function(args, env, t_env){
+	'set!' : function(args, env){
 		update(env, args[0], args[1]);
 		// hmmm... no need to update the type. typeExpr prevents this.
 		return 0;
 	},
-	'begin' : function(args, env, t_env){
+	'begin' : function(args, env){
 		if(args.length == 0)
 			throw 'No body for begin!';
 
 		// Eval head
-		var res = evalTScheem(args[0], env, t_env);
+		var res = evalTScheem(args[0], env);
 
 		// Eval recursively
 		if(args.length > 1){
@@ -322,32 +322,32 @@ var specials = {
 
 		return res;
 	},
-	'quote' : function(args, env, t_env){
+	'quote' : function(args, env){
 		//console.log('quoting as-is:');
 		//console.log(args[0]);
 		return args[0];
 	},
-	'if':function(args, env, t_env){
+	'if':function(args, env){
 		if(!args || args.constructor != Array || args.length == 0)
 			throw 'No args for if!';
 
 		if(args.length != 3)
 			throw 'Weird number of args for if (3)!';
 
-		return evalTScheem(args[0], env, t_env) == '#t' ? evalTScheem(args[1], env, t_env) : evalTScheem(args[2], env, t_env);
+		return evalTScheem(args[0], env) == '#t' ? evalTScheem(args[1], env) : evalTScheem(args[2], env);
 	},
-	'let-one':function(args, env, t_env){
+	'let-one':function(args, env){
 		// Creates a new env, shadowing the previous one
-		var varExprEvaled = evalTScheem(args[1], env, t_env)
+		var varExprEvaled = evalTScheem(args[1], env)
 		var myEnv = {
 			'bindings': { },
 			'outer' : env
 		};
 		myEnv.bindings[args[0]] = varExprEvaled;
 
-		return evalTScheem(args[2], myEnv, t_env);
+		return evalTScheem(args[2], myEnv);
 	},
-	'lambda-one':function(args, env, t_env){
+	'lambda-one':function(args, env){
 		if(args.length != 3)
 			throw new Error('lambda-one with invalid number of args (' + args.length + ').');
 
@@ -356,7 +356,7 @@ var specials = {
 
 		return 	function(myArg){
 						//console.log('myArg = ' + JSON.stringify(myArg));
-						return evalTScheem(['let-one', argName, myArg /* Assume one arg!*/, body], env /*Capture the env of lambda.*/, t_env);
+						return evalTScheem(['let-one', argName, myArg /* Assume one arg!*/, body], env /*Capture the env of lambda.*/);
 					};
     }/*, TODO REDO
     'lambda':function(args, env){
@@ -388,7 +388,7 @@ var initial_env_types = {
 	'car' : arrow(base('seq'), base('atom')),
 	'cdr' : arrow(base('seq'), base('seq')),
 	'cons': arrow(base('atom'), arrow(base('seq'), base('seq'))),
-	'empty-p': arrow(base('seq'), base('bool')),
+	'emptyp': arrow(base('seq'), base('bool')),
 	'+' : arrow(base('num'), arrow(base('num'), base('num'))),
 
 	'-' : arrow(base('num'), arrow(base('num'), base('num'))),
@@ -475,13 +475,14 @@ var initial_env = {
 	}
 };
 
-var evalTScheem = function (expr, env, t_env) {
+var evalTScheem = function (expr, env) {
 	//console.log(expr);
 	//console.log(typeof expr);
 
 	if(expr == null) {
 		throw 'expr is null!';
 	}
+
 	if(env == null){
 		throw 'env is null!';
 	}
@@ -505,27 +506,29 @@ var evalTScheem = function (expr, env, t_env) {
 	// Strings are variable references
 	if (typeof expr === 'string') {
 		//console.log('evaling as lookup');
-		return lookup(env, expr, t_env);
+		return lookup(env, expr);
 	}
 
 	// Look at head of list for operation
 	if(specials.hasOwnProperty(expr[0])){
 		//console.log('evaling as special form');
-		return specials[expr[0]](expr.slice(1), env, t_env);
+		return specials[expr[0]](expr.slice(1), env);
 	}
 
-	if(expr.length != 2)
-		throw 'Invalid function application = ' + JSON.stringify(expr);
+	if(expr.length != 2){
+		throw 'Invalid function application (more than 1 arg!) = ' + JSON.stringify(expr);
+	}
 
 	// Assume that is user defined function, returned by evaling the head
-	var tmp = evalTScheem(expr[0], env, t_env);
-	if(typeof tmp !== 'function')
+	var tmp = evalTScheem(expr[0], env);
+	if(typeof tmp !== 'function'){
 		throw 'Head of ' + JSON.stringify(expr) + ' is not a function!';
+	}
 
 	if(tmp){
 		// Before evaling a function,
 		// get arg type, get function type, test
-		var arg = evalTScheem(expr[1], env, t_env);
+		var arg = evalTScheem(expr[1], env);
 
 		return tmp(arg);
 	}
@@ -536,11 +539,12 @@ var evalTScheem = function (expr, env, t_env) {
  */
 var evalTScheemExternal = function(expr, Venv){	
 	// Ugly hack: Get the types of the given env. I know its ugly.
-	var Tenv = { bindings:{}, outer:{}};
+	var Tenv = { bindings:{}, outer:{} };
 	
 	var setTypes = function(ctx, env){
-		if(env == null)
+		if(env == null){
 			return;
+		}
 		if(ctx.bindings == null){
 			ctx.bindings = [];
 		}
@@ -557,6 +561,7 @@ var evalTScheemExternal = function(expr, Venv){
 			}
 		}
 	};
+
 	setTypes(Tenv, Venv);
 
 	var new_type_env = {
@@ -564,16 +569,16 @@ var evalTScheemExternal = function(expr, Venv){
 		outer : Tenv
 	};	
 
-	if(!evalTScheemTypes(expr, new_type_env))
+	if(!evalTScheemTypes(expr, new_type_env)){
 		throw new Error('Invalid return by evalTScheemTypes');
-
+	}
 
 	var new_env = {
 		bindings: initial_env,
 		outer : Venv
 	};
 	
-	return evalTScheem(expr, new_env, new_type_env);
+	return evalTScheem(expr, new_env);
 }
 
 var evalTScheemTypes = function(expr, env){
@@ -581,9 +586,11 @@ var evalTScheemTypes = function(expr, env){
 		bindings: initial_env_types,
 		outer : {}
 	};
+
 	if(env != null){
 		new_type_env.outer = env;
 	}
+
 	return typeExpr(expr, new_type_env);
 }
 

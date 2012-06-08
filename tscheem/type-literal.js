@@ -177,6 +177,24 @@ typeparser = (function(){
               if (result0 === null) {
                 pos = pos0;
               }
+              if (result0 === null) {
+                pos0 = pos;
+                if (input.substr(pos, 3) === "seq") {
+                  result0 = "seq";
+                  pos += 3;
+                } else {
+                  result0 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\"seq\"");
+                  }
+                }
+                if (result0 !== null) {
+                  result0 = (function(offset) { return { tag:"basetype", name:"seq" }; })(pos0);
+                }
+                if (result0 === null) {
+                  pos = pos0;
+                }
+              }
             }
           }
         }

@@ -11,6 +11,8 @@ atom =
      { return { tag:"basetype", name:"bool" }; }
      / "string" 
      { return { tag:"basetype", name:"string" }; }
+     / "seq" 
+     { return { tag:"basetype", name:"seq" }; }
 
 arrow = "(" ws* aleft:expression ws* "->" ws* aright:expression ws* ")"
     { return { tag:"arrowtype", left:aleft, right:aright }; }
