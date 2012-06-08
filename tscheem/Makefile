@@ -1,10 +1,13 @@
 
 PROJECT_HOME=~/projects/PL101_Pages/tscheem
 
-final: parser.js
+final: parser.js type-literal.js
 
 parser.js: scheem.pegs build.js
 	./build.js > parser.js
+
+type-literal.js: type-literal.pegs build-type-literal.js
+	./build-type-literal.js > type-literal.js
 
 .PHONY: clean
 clean:
