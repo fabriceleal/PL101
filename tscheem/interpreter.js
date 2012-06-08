@@ -356,7 +356,14 @@ var specials = {
 
 		return 	function(myArg){
 						//console.log('myArg = ' + JSON.stringify(myArg));
-						return evalTScheem(['let-one', argName, myArg /* Assume one arg!*/, body], env /*Capture the env of lambda.*/);
+						return evalTScheem(
+								[
+									'let-one', 
+									argName, 
+									["quote", myArg] /* Assume one arg! Quote it. It is already evaled, but let-one will re-eval-it*/, 
+									body
+								], 
+								env /*Capture the env of lambda.*/);
 					};
     }/*, TODO REDO
     'lambda':function(args, env){
