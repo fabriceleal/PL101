@@ -1,4 +1,4 @@
 var evalScheemString = function(str, env){
-	var tree = SCHEEM(str);
-	return evalScheemExternal(tree, env);
+	var tree = SCHEEM.parse(str);
+	return evalTScheemExternal(tree, env);
 };

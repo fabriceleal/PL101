@@ -9,132 +9,127 @@
   </script>
   <script src="../general/mocha.js">
   </script>
-  <script src="../general/get_data.js">
+  <script src="parser.js">
   </script>
+  <script src="../general/get_data.js"></script>
   <script>mocha.setup('tdd')</script>
+  <script src="type-literal.js"></script>  
   <script src="interpreter.js"></script>
   <script src="evalScheemString.js"></script>
   <script>
 	var assert = chai.assert;
 
-	var SCHEEM = null;
+
 
 	$(function(){
-			getData('parser.js', function(compiled){
-				// Download and compile parser
+			
+			// Download and compile tests;
+			// First the parser, then the interpreter!
+			getData('parser.tests.json', function(parserTests){
+					// Run parser tests
+					(function(tests){
+						tests.forEach(function(item){
+							suite(item.suite, function(){
+								console.log(JSON.stringify(item));
+								item.tests.forEach(function(thisTest){
 
-				SCHEEM = compiled;
-				console.log('Downloaded parser for scheem!!');
+									var compiled = null;
 
-				// Download and compile tests;
-				// First the parser, then the interpreter!
-				getData('parser.tests.json', function(parserTests){
-						// Run parser tests
-						(function(tests){
-							tests.forEach(function(item){
-								suite(item.suite, function(){
-									console.log(JSON.stringify(item));
-									item.tests.forEach(function(thisTest){
+									// "Compile" the function, or it won't appear in the html :|
+									if(thisTest.expected){
+										// Expect cool output
+										compiled = eval('(function(){assert.deepEqual( SCHEEM.parse(' + 
+												JSON.stringify(thisTest.test) + ') , ' + 
+												JSON.stringify(thisTest.expected) + ' );})');
+										//---
+									}else{
+										// Expect exception
+										compiled = eval('(function(){ assert.throws(function(){ SCHEEM.parse(' + 
+												JSON.stringify(thisTest.test) + ') }); })');
+										//---
+									}
 
-										var compiled = null;
+									test(thisTest.description, compiled);
 
-										// "Compile" the function, or it won't appear in the html :|
-										if(thisTest.expected){
-											// Expect cool output
-											compiled = eval('(function(){assert.deepEqual( SCHEEM(' + 
-													JSON.stringify(thisTest.test) + ') , ' + 
-													JSON.stringify(thisTest.expected) + ' );})');
-											//---
-										}else{
-											// Expect exception
-											compiled = eval('(function(){ assert.throws(function(){ SCHEEM(' + 
-													JSON.stringify(thisTest.test) + ') }); })');
-											//---
-										}
-
-										test(thisTest.description, compiled);
-
-									});
 								});
 							});
-						})(parserTests); // Run parser tests
+						});
+					})(parserTests); // Run parser tests
 
-						getData('interpreter.tests.json', function(interpreterTests){
-								// Run interpreter tests
-								(function(tests){
-									tests.forEach(function(item){
-										suite(item.suite, function(){
-											item.tests.forEach(function(thisTest){
+					getData('interpreter.tests.json', function(interpreterTests){
+							// Run interpreter tests
+							(function(tests){
+								tests.forEach(function(item){
+									suite(item.suite, function(){
+										item.tests.forEach(function(thisTest){
 
-												var compiled = null;
+											var compiled = null;
 
-												// "Compile" the function, or it won't appear in the html :|
-												if(thisTest.expected){
-													// Expect cool output
-													compiled = eval('(function(){assert.deepEqual( evalScheemExternal(' + 
-															JSON.stringify(thisTest.test) + ', ' + 
-															JSON.stringify(thisTest.env)+') , ' + 
-															JSON.stringify(thisTest.expected) + ' );})');
-													//---
-												}else{
-													// Expect exception
-													compiled = eval('(function(){ assert.throws(function(){ evalScheemExternal(' + 
-															JSON.stringify(thisTest.test) + ', ' + 
-															JSON.stringify(thisTest.env) + ') }); })');
-													//---
-												}
+											// "Compile" the function, or it won't appear in the html :|
+											if(thisTest.expected){
+												// Expect cool output
+												compiled = eval('(function(){assert.deepEqual( evalTScheemExternal(' + 
+														JSON.stringify(thisTest.test) + ', ' + 
+														JSON.stringify(thisTest.env)+') , ' + 
+														JSON.stringify(thisTest.expected) + ' );})');
+												//---
+											}else{
+												// Expect exception
+												compiled = eval('(function(){ assert.throws(function(){ evalTScheemExternal(' + 
+														JSON.stringify(thisTest.test) + ', ' + 
+														JSON.stringify(thisTest.env) + ') }); })');
+												//---
+											}
 
-												test(thisTest.description, compiled);
+											test(thisTest.description, compiled);
 
-											});
 										});
 									});
-								})(interpreterTests); // Run interpreter tests
+								});
+							})(interpreterTests); // Run interpreter tests
 
 
-								getData('evalScheemString.tests.json', function(plTests){
+							getData('evalScheemString.tests.json', function(plTests){
 
-										// Run pl tests
-										(function(tests){
-											tests.forEach(function(item){
-												suite(item.suite, function(){
-													item.tests.forEach(function(thisTest){
+									// Run pl tests
+									(function(tests){
+										tests.forEach(function(item){
+											suite(item.suite, function(){
+												item.tests.forEach(function(thisTest){
 
-														var compiled = null;
+													var compiled = null;
 
-														// "Compile" the function, or it won't appear in the html :|
-														if(thisTest.expected){
-															// Expect cool output
-															compiled = eval('(function(){assert.deepEqual( evalScheemString(' + 
-																	JSON.stringify(thisTest.test) + ', ' + 
-																	JSON.stringify(thisTest.env)+') , ' + 
-																	JSON.stringify(thisTest.expected) + ' );})');
-															//---
-														}else{
-															// Expect exception
-															compiled = eval('(function(){ assert.throws(function(){ evalScheemString(' + 
-																	JSON.stringify(thisTest.test) + ', ' + 
-																	JSON.stringify(thisTest.env) + ') }); })');
-															//---
-														}
+													// "Compile" the function, or it won't appear in the html :|
+													if(thisTest.expected){
+														// Expect cool output
+														compiled = eval('(function(){assert.deepEqual( evalScheemString(' + 
+																JSON.stringify(thisTest.test) + ', ' + 
+																JSON.stringify(thisTest.env)+') , ' + 
+																JSON.stringify(thisTest.expected) + ' );})');
+														//---
+													}else{
+														// Expect exception
+														compiled = eval('(function(){ assert.throws(function(){ evalScheemString(' + 
+																JSON.stringify(thisTest.test) + ', ' + 
+																JSON.stringify(thisTest.env) + ') }); })');
+														//---
+													}
 
-														test(thisTest.description, compiled);
+													test(thisTest.description, compiled);
 
-													});
 												});
 											});
-										})(plTests); // Run pl tests
+										});
+									})(plTests); // Run pl tests
 
 
-										mocha.run();
-								});
+									mocha.run();
+							});
 
-						}); // getData('interpreter.tests.json', ...
+					}); // getData('interpreter.tests.json', ...
 
-				}); // getData('parser.tests.json', ...
-			});
+			}); // getData('parser.tests.json', ...
 
-			// Download and compile test for the interpreter, 
 			
 	});
   </script>
