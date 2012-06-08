@@ -94,7 +94,22 @@ var prettyType = function (type) {
 // |- bool
 // |- string
 
-// * - atom is not a actual type, but rather a collection of types
+// * - atom is not an actual type, but rather a collection of types
+
+var exprToType = function(expr){
+	try{
+		var collapse = function(arg){
+			if(typeof arg === 'function')
+				throw new Error('Are you braindead???');
+			if(typeof arg !== 'object')
+				return arg;
+			return '(' + arg.map(collapse).join(' ') + ')';
+		};
+		return typeparser.parse(collapse(expr));
+	}catch(e){
+		throw new Error('Error processing type literal: ' + e.toString());
+	}
+}
 
 var typeExpr = function (expr, context /* this is the type context, of course */ ) {
 	// "Scalars" *****************************
@@ -136,8 +151,24 @@ var typeExpr = function (expr, context /* this is the type context, of course */
 				return typeExpr(elem, context);
 			}
 		case 'define':
-			context.bindings[expr[1]] = typeExpr(expr[2], context);
-			return context.bindings[expr[1]];
+			if(expr.length != 4)
+				throw new Error('define called with invalid number of args (' + (expr.length - 1) + ')');
+
+			// (define var-name var-type expr)
+			var defType = exprToType(expr[2]);
+			
+			// Update the context and pass it to the typeExpr that 
+			// evaluates the expr in (define ...). This way
+			// we can have recursive definitions. If something does not
+			// work out well, an exception is thrown, so no need to build
+			// temporary contexts ...
+			context.bindings[expr[1]] = defType;
+			var exprType = typeExpr(expr[3], context);
+
+			if(! sameType(defType, exprType))
+				throw new Error('The type of the define ' + prettyType(defType) + ' does not match the type of the expr ' + prettyType(exprType));
+			
+			return defType;
 		case 'begin': 
 			var len = expr.length;
 			if(len == 1)
@@ -224,19 +255,8 @@ var typeExprLambdaOne = function (expr, context) {
 		bindings: { },
 		outer: context
 	};
-
-	try{
-		var collapse = function(arg){
-			if(typeof arg === 'function')
-				throw new Error('Are you braindead???');
-			if(typeof arg !== 'object')
-				return arg;
-			return '(' + arg.map(collapse).join(' ') + ')';
-		}
-		context.bindings[expr[1]] = typeparser.parse(collapse(expr[2]));
-	}catch(e){
-		throw new Error('Error processing type literal: ' + e.toString());
-	}
+	
+	context.bindings[expr[1]] = exprToType(expr[2]);
 
 	return {
 		tag:   'arrowtype',
@@ -274,8 +294,11 @@ var sameType = function (a, b) {
 
 var specials = {
 	'define' : function(args, env, t_env){
+		if(args.length != 3)
+			throw 'define called with invalid number of arguments (' + args.length + ')';
 		// This is equivalent to the ex6 from chap5 (funcs5.js)
-		env.bindings[args[0]] = evalTScheem(args[1], env, t_env);
+		// (define var-name var-type expr)
+		env.bindings[args[0]] = evalTScheem(args[2], env, t_env);
 		// hmmm ... no need to update the type. won't be used anywhere.
 		return 0;
 	},
@@ -511,11 +534,13 @@ var evalTScheem = function (expr, env, t_env) {
 /*
  * Evals a tscheem expression
  */
-var evalTScheemExternal = function(expr, env){	
+var evalTScheemExternal = function(expr, Venv){	
 	// Ugly hack: Get the types of the given env. I know its ugly.
 	var Tenv = { bindings:{}, outer:{}};
 	
 	var setTypes = function(ctx, env){
+		if(env == null)
+			return;
 		if(ctx.bindings == null){
 			ctx.bindings = [];
 		}
@@ -532,22 +557,22 @@ var evalTScheemExternal = function(expr, env){
 			}
 		}
 	};
-	setTypes(Tenv, env);
-
-	if(!evalTScheemTypes(expr, Tenv))
-		throw new Error('Invalid return by evalTScheemTypes');
-
-	var new_env = {
-		bindings: initial_env,
-		outer : env
-	};
-	
+	setTypes(Tenv, Venv);
 
 	var new_type_env = {
 		bindings: initial_env_types,
-		outer : {}
+		outer : Tenv
 	};	
 
+	if(!evalTScheemTypes(expr, new_type_env))
+		throw new Error('Invalid return by evalTScheemTypes');
+
+
+	var new_env = {
+		bindings: initial_env,
+		outer : Venv
+	};
+	
 	return evalTScheem(expr, new_env, new_type_env);
 }
 
