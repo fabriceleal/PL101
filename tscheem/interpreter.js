@@ -414,11 +414,14 @@ var specials = {
 					};
     },
     'lambda':function(args, env){
-		throw new Error('Not yet implemented!');
+		//throw new Error('Not yet implemented!');
+		if(args.length != 2){
+			throw 'Lambda called with invalid number of args (' + args.length + ')';
+		}
+		
+		var myArgs = args[0];
 
-		var args = args[0];
-
-		if(args.length === 0){
+		if(myArgs.length === 0){
 			throw 'lambdas with no args are not supported!';
 		}
 
@@ -426,7 +429,9 @@ var specials = {
 		var res = null;
 
 		// Create nested functions.
-		for(var i = args.length - 1; i >= 0; i-=2){
+		for(var i = myArgs.length - 2; i >= 0; i-=2){
+			var argName = myArgs[i];
+
 			if(res == null){
 				// This is the last arg. Instead of returning a curried function, eval body
 				res = function(arg){
@@ -435,7 +440,7 @@ var specials = {
 						bindings:{},
 						outer: env
 					};
-					env.bindings[args[i]] = arg;
+					env.bindings[ argName ] = arg;
 					// Eval body
 					return evalTScheem(body, env);
 				};
@@ -447,7 +452,7 @@ var specials = {
 						bindings:{},
 						outer: env
 					};
-					env.bindings[args[i]] = arg;
+					env.bindings[ argName ] = arg;
 					// Nest function
 					return res;
 				};
