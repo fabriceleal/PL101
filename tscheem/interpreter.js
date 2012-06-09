@@ -87,15 +87,25 @@ var prettyType = function (type) {
     throw new Error('Unexpected tag: ' + type.tag);
 };
 
-// My type system:
-// seq
-// atom*
-// |- num
-// |- bool
-// |- string
+/* 
+ My type system:
+  any*
+  |-seq
+  |-atom*
+  | |- num
+  | |- bool
+  | |- string
+  |-arrow**
 
-// * - atom is not an actual type, but rather a collection of types
+ (*) - these are not actual types, but rather a collection of types 
+ (**) - arrow is an infinite set in the form (type -> type)
 
+ */
+
+/*
+ * Converts a parsed expression (such as ["num", "->", "num"]) 
+ * into its literal form (such as "(num -> num)")
+ */
 var exprToType = function(expr){
 	try{
 		var collapse = function(arg){
@@ -205,7 +215,7 @@ var typeExpr = function (expr, context /* this is the type context, of course */
 			throw 'Expression of type ' + prettyType(cmpType) + ' does not match slot type ' + prettyType(slotType);
 
 		case 'lambda':
-			throw expr[0] + ' not implemented yet!';			
+			return typeExprLambda(expr, context);
 	}
 
 	// Application (A B) *********************
@@ -245,46 +255,85 @@ var typeExprIf = function (expr, context) {
     return trueBranch;
 };
 
+var typeExprLambda = function (expr, context){
+	// (lambda (var-name var-type ...) body)
+	if(expr.length !== 3)
+		throw new Error('Weird length for lambda (' + expr.length + ') ...');
+
+	var args = expr[1];
+
+	if(args.length === 0)
+		throw new Error('lambdas with no args are not supported!');
+
+	var body = expr[2];
+
+	var finalType = { tag: 'arrowtype', left: {}, right: {} };
+	var currentBranch = finalType;
+
+	for(var i = 0; i < args.length; i+=2){
+		var typeOfArg = exprToType(args[i + 1]);
+		// Build context
+		context = {
+			bindings:{},
+			outer: context
+		};
+		context.bindings[ args[i] ] = typeOfArg;
+		// Build function type
+		if(i != 0){
+			currentBranch.right = { tag: 'arrowtype', left: {}, right: {} };
+			currentBranch = currentBranch.right;
+		}
+		currentBranch.left = typeOfArg;
+	}
+
+	// Eval body's type
+	currentBranch.right = typeExpr(body, context /* This context is not the original, at this point have the args */);
+	
+	return finalType;
+}
+
 var typeExprLambdaOne = function (expr, context) {
 	// (lambda-one arg-name arg-type body)
-	if(expr.length !== 4)
-		throw new Error('Weird length (' + expr.length + ') ...');
+	if(expr.length !== 4){
+		throw new Error('Weird length for lambda-one (' + expr.length + ') ...');
+	}
 
 	// Create new context with arg
 	context = {
 		bindings: { },
 		outer: context
-	};
-	
+	};	
 	context.bindings[expr[1]] = exprToType(expr[2]);
 
-	return {
-		tag:   'arrowtype',
-		left:  context.bindings[expr[1]],
-		right: typeExpr(expr[3], context)
-	};
+	return arrow(
+			context.bindings[expr[1]], 
+			typeExpr(expr[3], context) );
+	//---
 };
 
 /*
  * Tests if two types match
  */
 var sameType = function (a, b) {
-    if(a.tag !== b.tag)
-        return false;
-    
-    switch(a.tag){
-        case 'basetype':
-				// basetypes - any non-seq should be considered an atom. 
-				if(a.name === 'atom')
-					return b.name !== 'seq';
-				if(b.name === 'atom')
-					return a.name !== 'seq';
+	if(a.name === 'any' || b.name === 'any')
+		return true;
 
-            return (a.name === b.name);
-        case 'arrowtype':
-            return sameType(a.left, b.left) && sameType(a.right, b.right);
-    }
-    throw new Error('Unexpected on sameType!');
+	if(a.tag !== b.tag)
+		return false;
+
+	switch(a.tag){
+		case 'basetype':
+			// basetypes - any non-seq should be considered an atom. 
+			if(a.name === 'atom')
+				return (b.name !== 'seq');
+			if(b.name === 'atom')
+				return (a.name !== 'seq');
+
+			return (a.name === b.name);
+		case 'arrowtype':
+			return sameType(a.left, b.left) && sameType(a.right, b.right);
+	}
+	throw new Error('Unexpected on sameType!');
 };
 
 /*-------- The interpreter ---------*/
@@ -365,11 +414,80 @@ var specials = {
 								], 
 								env /*Capture the env of lambda.*/);
 					};
-    }/*, TODO REDO
+    },
     'lambda':function(args, env){
-		var argNames = args[0];
+		//throw new Error('Not yet implemented!');
+		if(args.length != 2){
+			throw 'Lambda called with invalid number of args (' + args.length + ')';
+		}
+		
+		var myArgs = args[0];
+
+		if(myArgs.length === 0){
+			throw 'lambdas with no args are not supported!';
+		}
+
 		var body = args[1];
 
+		var argIdx = 0, argMax = myArgs.length - 2; // -1 (fix to 0-based indexing) -1 (var-names in "even" indexes)
+
+		return function nextArg (arg){
+			// Manipulate env
+			env = {
+				bindings:{},
+				outer: env
+			};
+			env.bindings[ myArgs[ argIdx ] ] = arg;
+			
+			if(argIdx > argMax)
+				throw new Error('(argIdx > argMax) - This cant happen!');
+
+			if(argIdx === argMax ){
+				// Eval body
+				return evalTScheem(body, env)
+			}else{
+				// Increment by 2. lambda is declared with var-name var-type var-name var-type ....
+				argIdx += 2;
+				// Return curried for the next arg
+				return nextArg;
+			}
+
+		};
+/*
+		// Create nested functions.
+		for(var i = myArgs.length - 2; i >= 0; i-=2){
+			var argName = myArgs[i];
+
+			if(res == null){
+				// This is the last arg. Instead of returning a curried function, eval body
+				res = function(arg){
+					// Manipulate env
+					env = {
+						bindings:{},
+						outer: env
+					};
+					env.bindings[ argName ] = arg;
+					// Eval body
+					return evalTScheem(body, env);
+				};
+			}else{
+				// this is any arg besides the last. Return a curried function.
+				res = function(arg){
+					// Manipulate env
+					env = {
+						bindings:{},
+						outer: env
+					};
+					env.bindings[ argName ] = arg;
+					// Nest function
+					return res;
+				};
+			}
+
+		}
+
+		return res;*/
+		/*
 		return function(myArgs){
 					// Shadow env with args
 					var callingEnv = {
@@ -385,14 +503,14 @@ var specials = {
 					
 					// Call evalTScheem
 					return evalTScheem(toCall, callingEnv);
-				}
-	}*/
+				}*/
+	}
 };
 
 
 // functions dont need env!
 var initial_env_types = {
-	'car' : arrow(base('seq'), base('atom')),
+	'car' : arrow(base('seq'), base('any')),
 	'cdr' : arrow(base('seq'), base('seq')),
 	'cons': arrow(base('atom'), arrow(base('seq'), base('seq'))),
 	'emptyp': arrow(base('seq'), base('bool')),
