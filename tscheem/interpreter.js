@@ -92,11 +92,13 @@ var prettyType = function (type) {
   any*
   |-seq
   |-atom*
-    |- num
-    |- bool
-    |- string
+  | |- num
+  | |- bool
+  | |- string
+  |-arrow**
 
  (*) - these are not actual types, but rather a collection of types 
+ (**) - arrow is an infinite set in the form (type -> type)
 
  */
 
@@ -508,7 +510,7 @@ var specials = {
 
 // functions dont need env!
 var initial_env_types = {
-	'car' : arrow(base('seq'), base('atom')),
+	'car' : arrow(base('seq'), base('any')),
 	'cdr' : arrow(base('seq'), base('seq')),
 	'cons': arrow(base('atom'), arrow(base('seq'), base('seq'))),
 	'emptyp': arrow(base('seq'), base('bool')),
