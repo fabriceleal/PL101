@@ -11,17 +11,28 @@
 		]
 	},
 	{
-		"suite" :"recursion",
+		"suite" : "lambda",
+		"tests" : [
+			{
+				"description" : "+ wrapper",
+				"test": "(begin (define x (num -> (num -> num)) (lambda (x num y num) ((+ x) y)) ) ((x 1) 3) )",
+				"env": {"bindings":{}, "outer":{}},
+				"expected" : 4
+			}
+		]
+	},
+	{
+		"suite" :"lambda - recursion",
 		"tests" : [
 			{
 				"description": "factorial",
-				"test": "(begin (define factorial (lambda (n) (if ((= n) 1) 1 (* n (factorial ((- n) 1))) ))) (factorial 4))",
+				"test": "(begin (define factorial (num -> num) (lambda (n num) (if ((= n) 1) 1 ((* n) (factorial ((- n) 1))) ))) (factorial 4))",
 				"env" : {"bindings":{}, "outer":{}},
 				"expected" : 24
 			},
 			{
 				"description": "factorial with external binding >:D",
-				"test": "(begin (define factorial (lambda (n) (if ((= n) 1) 1 (* n (factorial ((- n) 1))) ))) (factorial n))",
+				"test": "(begin (define factorial (num -> num) (lambda (n num) (if ((= n) 1) 1 ((* n) (factorial ((- n) 1))) ))) (factorial n))",
 				"env" : {"bindings":{ "n" : 5}, "outer":{}},
 				"expected" : 120
 			}
