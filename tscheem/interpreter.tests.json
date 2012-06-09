@@ -261,25 +261,30 @@
 		"tests" : [
 			{
 				"description": "Arg order (1/2)",
-				"test" : [["lambda", ["a", "b"], [["/", "a"], "b"]], 1, 2],
+				"test" : [[["lambda", ["a", "num", "b", "num"], [["/", "a"], "b"]], 1], 2],
 				"env" : {"bindings" : {}, "outer":{}},
 				"expected" : 0.5
 			},
 			{
 				"description": "Arg order (2/1)",
-				"test" : [["lambda", ["a", "b"], [["/", "b"], "a"]], 1, 2],
+				"test" : [[["lambda", ["a", "num", "b", "num"], [["/", "b"], "a"]], 1], 2],
 				"env" : {"bindings" : {}, "outer":{}},
 				"expected" : 2
 			},
 			{
 				"description": "High order",
-				"test" : [["lambda", ["f", "x"], [["f", "x"], 5]], ["lambda", ["x", "y"], [["+", "x"], "y"]], 2],
+				"test" : [
+					[
+						["lambda", ["f", ["num", "->", ["num", "->", "num"]] , "x", "num"], [["f", "x"], 5]], 
+						["lambda", ["x", "num", "y", "num"], [["+", "x"], "y"]]
+					],
+					2],
 				"env" : {"bindings" : {}, "outer":{}},
 				"expected" : 7
 			},
 			{
 				"description": "Uses outside var",
-				"test" : [["lambda", ["x"], [["lambda", ["y"], [["+", "x"], "y"]], 4]], 2],
+				"test" : [["lambda", ["x", "num"], [["lambda", ["y", "num"], [["+", "x"], "y"]], 4]], 2],
 				"env" : {"bindings" : {}, "outer":{}},
 				"expected" : 6
 			}
