@@ -250,7 +250,7 @@ var typeExprIf = function (expr, context) {
     var falseBranch = typeExpr(expr[3], context);
     
     if(!sameType(trueBranch, falseBranch))
-        throw new Error('Types of true and false do not match!');
+        throw new Error('Types of true ' + prettyType(trueBranch) + ' and false ' + prettyType(falseBranch) + ' do not match!');
     
     return trueBranch;
 };
