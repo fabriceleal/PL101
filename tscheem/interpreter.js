@@ -426,8 +426,32 @@ var specials = {
 		}
 
 		var body = args[1];
-		var res = null;
 
+		var argIdx = 0, argMax = myArgs.length - 2; // -1 (fix to 0-based indexing) -1 (var-names in "even" indexes)
+
+		return function nextArg (arg){
+			// Manipulate env
+			env = {
+				bindings:{},
+				outer: env
+			};
+			env.bindings[ myArgs[ argIdx ] ] = arg;
+			
+			if(argIdx > argMax)
+				throw new Error('(argIdx > argMax) - This cant happen!');
+
+			if(argIdx === argMax ){
+				// Eval body
+				return evalTScheem(body, env)
+			}else{
+				// Increment by 2. lambda is declared with var-name var-type var-name var-type ....
+				argIdx += 2;
+				// Return curried for the next arg
+				return nextArg;
+			}
+
+		};
+/*
 		// Create nested functions.
 		for(var i = myArgs.length - 2; i >= 0; i-=2){
 			var argName = myArgs[i];
@@ -460,7 +484,7 @@ var specials = {
 
 		}
 
-		return res;
+		return res;*/
 		/*
 		return function(myArgs){
 					// Shadow env with args
